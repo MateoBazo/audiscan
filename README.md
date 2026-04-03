@@ -71,23 +71,6 @@ flutter pub get
 flutter run
 ```
 
----
-
-## Roadmap
-
-| Fase | Módulo | Estado |
-|------|--------|--------|
-| 0 | Setup — repo, Docker, Flutter, Supabase | 🔄 En progreso |
-| 1 | Auth y roles | ⏳ Pendiente |
-| 2 | Gestión de pacientes | ⏳ Pendiente |
-| 3 | Agenda y citas | ⏳ Pendiente |
-| 4 | Historia clínica digital | ⏳ Pendiente |
-| 5 | IA — imagen timpánica (CNN) | ⏳ Pendiente |
-| 6 | IA — audiograma (ML tabular) | ⏳ Pendiente |
-| 7 | Reportes PDF | ⏳ Pendiente |
-| 8 | Teleconsulta WebRTC | ⏳ Pendiente |
-| 9 | Screening de riesgo + sugerencias clínicas | ⏳ Pendiente |
-| 10 | Polish, pruebas, deploy | ⏳ Pendiente |
 
 ---
 
