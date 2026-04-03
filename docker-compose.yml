@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: audiscan_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app          # Hot reload en desarrollo
+    env_file:
+      - ./backend/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Supabase corre en la nube — no se levanta localmente.
+  # Para pruebas locales de BD usar supabase CLI por separado si se necesita.
+
+networks:
+  default:
+    name: audiscan_network

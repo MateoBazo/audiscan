@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Entornos y secretos
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Modelos ML entrenados (son grandes — usar Git LFS o storage externo)
+backend/ai/models/*.h5
+backend/ai/models/*.pkl
+backend/ai/models/*.joblib
+backend/notebooks/.ipynb_checkpoints/
+
+# Docker
+*.log
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/**/*.g.dart
+mobile/**/*.freezed.dart
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Cobertura de tests
+coverage/
+.coverage
+htmlcov/
