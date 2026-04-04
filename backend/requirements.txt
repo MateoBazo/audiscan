@@ -18,11 +18,12 @@ supabase==2.7.4
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.9
+email-validator==2.3.0
 
 # ML — imágenes
-tensorflow==2.17.0
-opencv-python-headless==4.10.0.84
-Pillow==10.4.0
+#tensorflow==2.17.0
+#opencv-python-headless==4.10.0.84
+#Pillow==10.4.0
 
 # ML — tabular
 scikit-learn==1.5.2
@@ -30,9 +31,9 @@ xgboost==2.1.1
 joblib==1.4.2
 
 # Análisis de señal (audiograma)
-librosa==0.10.2
-scipy==1.14.1
-numpy==1.26.4
+#librosa==0.10.2
+#scipy==1.14.1
+#numpy==1.26.4
 
 # PDF
 reportlab==4.2.2

@@ -1,23 +1,31 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.config import settings
+
+from app.api.auth import router as auth_router
+from app.core.config import settings
 
 app = FastAPI(
     title="AudiScan API",
+    description="Backend clínico para otorrinolaringología con módulos de IA",
     version="0.1.0",
-    description="Backend clínico para AudiScan — asistente IA en otorrinolaringología",
+    docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
+    redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None,
 )
 
+# CORS — ajustar origins en producción
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ─── Routers ──────────────────────────────────────────────────────────────────
+app.include_router(auth_router, prefix="/api/v1")
 
-@app.get("/health", tags=["Sistema"])
-async def health_check():
-    """Endpoint de verificación — confirma que el backend está vivo."""
-    return {"status": "ok", "service": "audiscan-api", "version": "0.1.0"}
+
+# ─── Health check ─────────────────────────────────────────────────────────────
+@app.get("/health", tags=["System"])
+def health_check():
+    return {"status": "ok", "env": settings.ENVIRONMENT}
