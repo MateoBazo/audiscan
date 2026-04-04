@@ -5,6 +5,9 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/home_placeholder.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/pacientes/models/paciente_modelo.dart';
+import '../../features/pacientes/presentation/pacientes_pantalla.dart';
+import '../../features/pacientes/presentation/registrar_paciente_pantalla.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -33,6 +36,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
       GoRoute(path: '/home', builder: (_, __) => const HomePlaceholder()),
+      GoRoute(
+        path: '/pacientes',
+        builder: (_, __) => const PacientesPantalla(),
+        routes: [
+          GoRoute(
+            path: 'nuevo',
+            builder: (_, __) => const RegistrarPacientePantalla(),
+          ),
+          GoRoute(
+            path: 'editar',
+            builder: (context, state) => RegistrarPacientePantalla(
+              paciente: state.extra as PacienteModelo?,
+            ),
+          ),
+        ],
+      ),
     ],
   );
 });
