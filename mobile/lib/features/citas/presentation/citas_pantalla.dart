@@ -203,7 +203,7 @@ class _TarjetaCita extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => context.push('/citas/editar', extra: cita),
+          onTap: () => context.push('/citas/detalle', extra: cita),
           onLongPress: () => _mostrarMenuEstado(context, ref),
           child: Padding(
             padding: const EdgeInsets.all(16),

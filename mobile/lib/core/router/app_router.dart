@@ -8,10 +8,15 @@ import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/citas/models/cita_modelo.dart';
 import '../../features/citas/presentation/citas_pantalla.dart';
+import '../../features/citas/presentation/detalle_cita_pantalla.dart';
 import '../../features/citas/presentation/registrar_cita_pantalla.dart';
 import '../../features/pacientes/models/paciente_modelo.dart';
 import '../../features/pacientes/presentation/pacientes_pantalla.dart';
 import '../../features/pacientes/presentation/registrar_paciente_pantalla.dart';
+import '../../features/registros_clinicos/models/registro_clinico_modelo.dart';
+import '../../features/registros_clinicos/presentation/detalle_registro_clinico_pantalla.dart';
+import '../../features/registros_clinicos/presentation/historial_clinico_pantalla.dart';
+import '../../features/registros_clinicos/presentation/registrar_registro_clinico_pantalla.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -54,7 +59,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               paciente: state.extra as PacienteModelo?,
             ),
           ),
+          GoRoute(
+            path: 'historial',
+            builder: (context, state) => HistorialClinicoPantalla(
+              paciente: state.extra as PacienteModelo,
+            ),
+          ),
         ],
+      ),
+      GoRoute(
+        path: '/registros-clinicos/nuevo',
+        builder: (context, state) => RegistrarRegistroClinicoPantalla(
+          paciente: state.extra as PacienteModelo,
+        ),
+      ),
+      GoRoute(
+        path: '/registros-clinicos/detalle',
+        builder: (context, state) {
+          final datos = state.extra as Map<String, dynamic>;
+          return DetalleRegistroClinicoPantalla(
+            registro: datos['registro'] as RegistroClinicoModelo,
+            paciente: datos['paciente'] as PacienteModelo,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/registros-clinicos/editar',
+        builder: (context, state) {
+          final datos = state.extra as Map<String, dynamic>;
+          return RegistrarRegistroClinicoPantalla(
+            paciente: datos['paciente'] as PacienteModelo,
+            registro: datos['registro'] as RegistroClinicoModelo,
+          );
+        },
       ),
       GoRoute(
         path: '/citas',
@@ -63,6 +100,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'nueva',
             builder: (_, __) => const RegistrarCitaPantalla(),
+          ),
+          GoRoute(
+            path: 'detalle',
+            builder: (context, state) => DetalleCitaPantalla(
+              cita: state.extra as CitaModelo,
+            ),
           ),
           GoRoute(
             path: 'editar',

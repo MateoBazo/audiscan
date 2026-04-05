@@ -5,14 +5,38 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../models/paciente_modelo.dart';
 import '../providers/pacientes_provider.dart';
+import '../../../core/utils/color_paciente.dart';
 
-class PacientesPantalla extends ConsumerWidget {
+class PacientesPantalla extends ConsumerStatefulWidget {
   const PacientesPantalla({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PacientesPantalla> createState() => _PacientesPantallaState();
+}
+
+class _PacientesPantallaState extends ConsumerState<PacientesPantalla> {
+  final _busquedaCtrl = TextEditingController();
+  String _terminoBusqueda = '';
+
+  @override
+  void dispose() {
+    _busquedaCtrl.dispose();
+    super.dispose();
+  }
+
+  List<PacienteModelo> _filtrar(List<PacienteModelo> pacientes) {
+    if (_terminoBusqueda.isEmpty) return pacientes;
+    final termino = _terminoBusqueda.toLowerCase();
+    return pacientes
+        .where((p) => p.nombreCompleto.toLowerCase().contains(termino))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context, ) {
     final estado = ref.watch(pacientesProvider);
     final theme = Theme.of(context);
+    final pacientesFiltrados = _filtrar(estado.pacientes);
 
     return Scaffold(
       appBar: AppBar(
@@ -27,7 +51,9 @@ class PacientesPantalla extends ConsumerWidget {
             const Text('Mis Pacientes'),
             if (!estado.cargando && estado.pacientes.isNotEmpty)
               Text(
-                '${estado.pacientes.length} registrados',
+                _terminoBusqueda.isEmpty
+                    ? '${estado.pacientes.length} registrados'
+                    : '${pacientesFiltrados.length} de ${estado.pacientes.length}',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -41,8 +67,43 @@ class PacientesPantalla extends ConsumerWidget {
             onPressed: () => ref.read(pacientesProvider.notifier).cargar(),
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: TextField(
+              controller: _busquedaCtrl,
+              onChanged: (valor) =>
+                  setState(() => _terminoBusqueda = valor.trim()),
+              decoration: InputDecoration(
+                hintText: 'Buscar paciente...',
+                prefixIcon: const Icon(Icons.search_outlined),
+                suffixIcon: _terminoBusqueda.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _busquedaCtrl.clear();
+                          setState(() => _terminoBusqueda = '');
+                        },
+                      )
+                    : null,
+                isDense: true,
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
-      body: _Cuerpo(estado: estado),
+      body: _Cuerpo(
+        estado: estado,
+        pacientesFiltrados: pacientesFiltrados,
+        hayBusqueda: _terminoBusqueda.isNotEmpty,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/pacientes/nuevo'),
         icon: const Icon(Icons.person_add_outlined),
@@ -56,8 +117,14 @@ class PacientesPantalla extends ConsumerWidget {
 
 class _Cuerpo extends ConsumerWidget {
   final PacientesEstado estado;
+  final List<PacienteModelo> pacientesFiltrados;
+  final bool hayBusqueda;
 
-  const _Cuerpo({required this.estado});
+  const _Cuerpo({
+    required this.estado,
+    required this.pacientesFiltrados,
+    required this.hayBusqueda,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,15 +139,49 @@ class _Cuerpo extends ConsumerWidget {
 
     if (estado.pacientes.isEmpty) return const _VacioVista();
 
+    if (pacientesFiltrados.isEmpty) return _SinResultadosVista();
+
     return RefreshIndicator(
       onRefresh: () => ref.read(pacientesProvider.notifier).cargar(),
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
-        itemCount: estado.pacientes.length,
+        itemCount: pacientesFiltrados.length,
         itemBuilder: (context, indice) {
-          final paciente = estado.pacientes[indice];
+          final paciente = pacientesFiltrados[indice];
           return _TarjetaPaciente(paciente: paciente);
         },
+      ),
+    );
+  }
+}
+
+// ─── Sin resultados de búsqueda ───────────────────────────────────────────────
+
+class _SinResultadosVista extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off_outlined,
+              size: 72, color: theme.colorScheme.outlineVariant),
+          const SizedBox(height: 16),
+          Text(
+            'Sin resultados',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Probá con otro nombre',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.outlineVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -130,11 +231,11 @@ class _TarjetaPaciente extends ConsumerWidget {
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading: CircleAvatar(
-            backgroundColor: theme.colorScheme.primaryContainer,
+            backgroundColor: colorDePaciente(paciente.nombreCompleto),
             child: Text(
               paciente.iniciales,
-              style: TextStyle(
-                color: theme.colorScheme.onPrimaryContainer,
+              style: const TextStyle(
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -145,7 +246,7 @@ class _TarjetaPaciente extends ConsumerWidget {
           ),
           subtitle: _subtitulo(paciente, theme),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/pacientes/editar', extra: paciente),
+          onTap: () => context.push('/pacientes/historial', extra: paciente),
         ),
       ),
     );
