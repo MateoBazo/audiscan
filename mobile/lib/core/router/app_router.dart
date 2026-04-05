@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -5,6 +6,9 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/home_placeholder.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/citas/models/cita_modelo.dart';
+import '../../features/citas/presentation/citas_pantalla.dart';
+import '../../features/citas/presentation/registrar_cita_pantalla.dart';
 import '../../features/pacientes/models/paciente_modelo.dart';
 import '../../features/pacientes/presentation/pacientes_pantalla.dart';
 import '../../features/pacientes/presentation/registrar_paciente_pantalla.dart';
@@ -48,6 +52,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: 'editar',
             builder: (context, state) => RegistrarPacientePantalla(
               paciente: state.extra as PacienteModelo?,
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/citas',
+        builder: (_, __) => const CitasPantalla(),
+        routes: [
+          GoRoute(
+            path: 'nueva',
+            builder: (_, __) => const RegistrarCitaPantalla(),
+          ),
+          GoRoute(
+            path: 'editar',
+            builder: (context, state) => RegistrarCitaPantalla(
+              cita: state.extra as CitaModelo?,
             ),
           ),
         ],

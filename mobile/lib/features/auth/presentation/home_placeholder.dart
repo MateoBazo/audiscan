@@ -62,6 +62,14 @@ class HomePlaceholder extends ConsumerWidget {
               descripcion: 'Registrar y gestionar pacientes',
               onTap: () => context.go('/pacientes'),
             ),
+            const SizedBox(height: 8),
+            // Tarjeta agenda
+            _TarjetaModulo(
+              icono: Icons.calendar_month_outlined,
+              titulo: 'Agenda',
+              descripcion: 'Consultar y gestionar citas',
+              onTap: () => context.go('/citas'),
+            ),
           ],
         ),
       ),
