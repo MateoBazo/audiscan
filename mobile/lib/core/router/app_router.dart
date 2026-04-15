@@ -17,6 +17,9 @@ import '../../features/registros_clinicos/models/registro_clinico_modelo.dart';
 import '../../features/registros_clinicos/presentation/detalle_registro_clinico_pantalla.dart';
 import '../../features/registros_clinicos/presentation/historial_clinico_pantalla.dart';
 import '../../features/registros_clinicos/presentation/registrar_registro_clinico_pantalla.dart';
+import '../../features/imagenes_timpanicas/models/imagen_timpanica_modelo.dart';
+import '../../features/imagenes_timpanicas/presentation/capturar_imagen_timpanica_pantalla.dart';
+import '../../features/imagenes_timpanicas/presentation/resultado_imagen_timpanica_pantalla.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -90,6 +93,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return RegistrarRegistroClinicoPantalla(
             paciente: datos['paciente'] as PacienteModelo,
             registro: datos['registro'] as RegistroClinicoModelo,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/imagenes-timpanicas/capturar',
+        builder: (context, state) {
+          final datos = state.extra as Map<String, dynamic>;
+          return CapturarImagenTimpanicaPantalla(
+            registro: datos['registro'] as RegistroClinicoModelo,
+            paciente: datos['paciente'] as PacienteModelo,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/imagenes-timpanicas/resultado',
+        builder: (context, state) {
+          final datos = state.extra as Map<String, dynamic>;
+          return ResultadoImagenTimpanicaPantalla(
+            imagen: datos['imagen'] as ImagenTimpanicaModelo,
+            registro: datos['registro'] as RegistroClinicoModelo,
+            paciente: datos['paciente'] as PacienteModelo,
           );
         },
       ),

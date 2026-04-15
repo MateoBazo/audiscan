@@ -140,6 +140,24 @@ class DetalleRegistroClinicoPantalla extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
+            // ── Botón imagen timpánica ────────────────────────────────────
+            OutlinedButton.icon(
+              onPressed: () => context.push(
+                '/imagenes-timpanicas/capturar',
+                extra: {'registro': registroActual, 'paciente': paciente},
+              ),
+              icon: const Icon(Icons.camera_alt_outlined),
+              label: const Text('Imagen timpánica + IA'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
             // ── Botón editar ──────────────────────────────────────────────
             FilledButton.icon(
               onPressed: () => context.push(

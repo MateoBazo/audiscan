@@ -22,7 +22,13 @@ env/
 backend/ai/models/*.h5
 backend/ai/models/*.pkl
 backend/ai/models/*.joblib
+backend/ai/models/*.keras
 backend/notebooks/.ipynb_checkpoints/
+
+# Dataset de imágenes (no versionar)
+backend/dataset/
+backend/otoscopic-image-dataset/
+backend/otoscopic-image-dataset.zip
 
 # Docker
 *.log
