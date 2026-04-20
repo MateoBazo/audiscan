@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:shimmer/shimmer.dart';
 import '../models/paciente_modelo.dart';
 import '../providers/pacientes_provider.dart';
 import '../../../core/utils/color_paciente.dart';
+import '../../../core/widgets/vista_cargando.dart';
+import '../../../core/widgets/vista_vacia.dart';
+import '../../../core/widgets/vista_error.dart';
+import '../../../core/widgets/fondo_dismissible.dart';
+import '../../../core/widgets/dialogo_confirmar_eliminacion.dart';
 
 class PacientesPantalla extends ConsumerStatefulWidget {
   const PacientesPantalla({super.key});
@@ -33,7 +37,7 @@ class _PacientesPantallaState extends ConsumerState<PacientesPantalla> {
   }
 
   @override
-  Widget build(BuildContext context, ) {
+  Widget build(BuildContext context) {
     final estado = ref.watch(pacientesProvider);
     final theme = Theme.of(context);
     final pacientesFiltrados = _filtrar(estado.pacientes);
@@ -128,16 +132,22 @@ class _Cuerpo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (estado.cargando) return const _CargandoVista();
+    if (estado.cargando) return const VistaCargando(alturaItem: 80, cantidadItems: 6);
 
     if (estado.error != null && estado.pacientes.isEmpty) {
-      return _ErrorVista(
+      return VistaError(
         mensaje: estado.error!,
         onReintentar: () => ref.read(pacientesProvider.notifier).cargar(),
       );
     }
 
-    if (estado.pacientes.isEmpty) return const _VacioVista();
+    if (estado.pacientes.isEmpty) {
+      return const VistaVacia(
+        icono: Icons.person_search_outlined,
+        titulo: 'Sin pacientes registrados',
+        subtitulo: 'Tocá "Nuevo paciente" para agregar uno',
+      );
+    }
 
     if (pacientesFiltrados.isEmpty) return _SinResultadosVista();
 
@@ -201,20 +211,13 @@ class _TarjetaPaciente extends ConsumerWidget {
     return Dismissible(
       key: ValueKey(paciente.id),
       direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.errorContainer,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(
-          Icons.delete_outline,
-          color: theme.colorScheme.onErrorContainer,
-        ),
+      background: const FondoDismissible(),
+      confirmDismiss: (_) => mostrarDialogoConfirmarEliminacion(
+        context,
+        titulo: 'Eliminar paciente',
+        contenido:
+            '¿Eliminar a ${paciente.nombreCompleto}? Esta acción no se puede deshacer.',
       ),
-      confirmDismiss: (_) => _confirmarEliminacion(context),
       onDismissed: (_) {
         ref.read(pacientesProvider.notifier).eliminar(paciente.id);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -265,134 +268,6 @@ class _TarjetaPaciente extends ConsumerWidget {
     return Text(
       partes.join(' · '),
       style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-    );
-  }
-
-  Future<bool?> _confirmarEliminacion(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar paciente'),
-        content: Text(
-          '¿Eliminar a ${paciente.nombreCompleto}? Esta acción no se puede deshacer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Estados de la pantalla ───────────────────────────────────────────────────
-
-class _CargandoVista extends StatelessWidget {
-  const _CargandoVista();
-
-  @override
-  Widget build(BuildContext context) {
-    final baseColor = Theme.of(context).colorScheme.surfaceContainerHighest;
-    final highlightColor = Theme.of(context).colorScheme.surfaceContainerLow;
-
-    return Shimmer.fromColors(
-      baseColor: baseColor,
-      highlightColor: highlightColor,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        itemCount: 6,
-        itemBuilder: (_, __) => Container(
-          height: 80,
-          margin: const EdgeInsets.only(bottom: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _VacioVista extends StatelessWidget {
-  const _VacioVista();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.person_search_outlined,
-            size: 72,
-            color: theme.colorScheme.outlineVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Sin pacientes registrados',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tocá "Nuevo paciente" para agregar uno',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.outlineVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorVista extends StatelessWidget {
-  final String mensaje;
-  final VoidCallback onReintentar;
-
-  const _ErrorVista({required this.mensaje, required this.onReintentar});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.wifi_off_outlined,
-              size: 64,
-              color: theme.colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              mensaje,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onReintentar,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

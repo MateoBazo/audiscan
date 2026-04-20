@@ -6,6 +6,9 @@ import '../models/registro_clinico_modelo.dart';
 import '../providers/registros_clinicos_provider.dart';
 import '../../pacientes/models/paciente_modelo.dart';
 import '../../citas/providers/citas_provider.dart';
+import '../../../core/widgets/boton_guardar.dart';
+import '../../../core/widgets/campo_fecha.dart';
+import '../../../core/widgets/encabezado_seccion.dart';
 
 class RegistrarRegistroClinicoPantalla extends ConsumerStatefulWidget {
   final PacienteModelo paciente;
@@ -144,8 +147,6 @@ class _RegistrarRegistroClinicoPantallaState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final formatoFecha = DateFormat('dd/MM/yyyy');
     final estadoCitas = ref.watch(citasProvider);
     final citasVinculables = estadoCitas.citas.where((c) =>
         c.idPaciente == widget.paciente.id &&
@@ -173,15 +174,8 @@ class _RegistrarRegistroClinicoPantallaState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Cita vinculada ────────────────────────────────────────────
               if (!_esEdicion && citasVinculables.isNotEmpty) ...[
-                Text(
-                  'Cita asociada',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                const EncabezadoSeccion(titulo: 'Cita asociada'),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String?>(
                   value: _idCitaSeleccionada,
@@ -207,7 +201,6 @@ class _RegistrarRegistroClinicoPantallaState
                   onChanged: (valor) {
                     setState(() {
                       _idCitaSeleccionada = valor;
-                      // Autocompletar fecha con la de la cita seleccionada
                       if (valor != null) {
                         final cita = citasVinculables
                             .firstWhere((c) => c.id == valor);
@@ -219,43 +212,18 @@ class _RegistrarRegistroClinicoPantallaState
                 const SizedBox(height: 28),
               ],
 
-              // ── Fecha ─────────────────────────────────────────────────────
-              Text(
-                'Fecha',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Fecha'),
               const SizedBox(height: 12),
 
-              InkWell(
+              CampoFecha(
+                fecha: _fecha,
+                etiqueta: 'Fecha del registro',
+                iconoSufijo: Icons.edit_calendar_outlined,
                 onTap: _seleccionarFecha,
-                borderRadius: BorderRadius.circular(4),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha del registro',
-                    prefixIcon: Icon(Icons.calendar_today_outlined),
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.edit_calendar_outlined),
-                  ),
-                  child: Text(
-                    formatoFecha.format(_fecha),
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                ),
               ),
 
               const SizedBox(height: 28),
-
-              // ── Consulta ──────────────────────────────────────────────────
-              Text(
-                'Consulta',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Consulta'),
               const SizedBox(height: 12),
 
               TextFormField(
@@ -286,15 +254,7 @@ class _RegistrarRegistroClinicoPantallaState
               ),
 
               const SizedBox(height: 28),
-
-              // ── Diagnóstico y tratamiento ─────────────────────────────────
-              Text(
-                'Diagnóstico y tratamiento',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Diagnóstico y tratamiento'),
               const SizedBox(height: 12),
 
               TextFormField(
@@ -325,15 +285,7 @@ class _RegistrarRegistroClinicoPantallaState
               ),
 
               const SizedBox(height: 28),
-
-              // ── Observaciones ─────────────────────────────────────────────
-              Text(
-                'Observaciones',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Observaciones'),
               const SizedBox(height: 12),
 
               TextFormField(
@@ -351,27 +303,10 @@ class _RegistrarRegistroClinicoPantallaState
 
               const SizedBox(height: 36),
 
-              FilledButton(
-                onPressed: _guardando ? null : _guardar,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: _guardando
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        _esEdicion ? 'Guardar cambios' : 'Guardar registro',
-                        style: const TextStyle(fontSize: 16),
-                      ),
+              BotonGuardar(
+                guardando: _guardando,
+                onPressed: _guardar,
+                etiqueta: _esEdicion ? 'Guardar cambios' : 'Guardar registro',
               ),
             ],
           ),

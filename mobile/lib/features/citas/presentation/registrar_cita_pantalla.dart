@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../models/cita_modelo.dart';
 import '../providers/citas_provider.dart';
 import '../../pacientes/providers/pacientes_provider.dart';
+import '../../../core/widgets/boton_guardar.dart';
+import '../../../core/widgets/campo_fecha.dart';
+import '../../../core/widgets/encabezado_seccion.dart';
 
 const _opcionesDuracion = [15, 30, 45, 60, 90];
 
@@ -151,7 +153,6 @@ class _RegistrarCitaPantallaState extends ConsumerState<RegistrarCitaPantalla> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pacientes = ref.watch(pacientesProvider).pacientes;
-    final formatoFecha = DateFormat('dd/MM/yyyy');
 
     return Scaffold(
       appBar: AppBar(
@@ -164,14 +165,7 @@ class _RegistrarCitaPantallaState extends ConsumerState<RegistrarCitaPantalla> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Paciente ──────────────────────────────────────────────────
-              Text(
-                'Paciente',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Paciente'),
               const SizedBox(height: 12),
 
               DropdownButtonFormField<String>(
@@ -194,15 +188,7 @@ class _RegistrarCitaPantallaState extends ConsumerState<RegistrarCitaPantalla> {
               ),
 
               const SizedBox(height: 28),
-
-              // ── Fecha y hora ──────────────────────────────────────────────
-              Text(
-                'Fecha y hora',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Fecha y hora'),
               const SizedBox(height: 12),
 
               Row(
@@ -212,28 +198,11 @@ class _RegistrarCitaPantallaState extends ConsumerState<RegistrarCitaPantalla> {
                       validator: (_) => _fechaSeleccionada == null
                           ? 'Seleccioná una fecha'
                           : null,
-                      builder: (fieldState) => InkWell(
+                      builder: (fieldState) => CampoFecha(
+                        fecha: _fechaSeleccionada,
+                        etiqueta: 'Fecha *',
                         onTap: _seleccionarFecha,
-                        borderRadius: BorderRadius.circular(4),
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: 'Fecha *',
-                            prefixIcon:
-                                const Icon(Icons.calendar_today_outlined),
-                            border: const OutlineInputBorder(),
-                            errorText: fieldState.errorText,
-                          ),
-                          child: Text(
-                            _fechaSeleccionada != null
-                                ? formatoFecha.format(_fechaSeleccionada!)
-                                : 'Seleccionar',
-                            style: _fechaSeleccionada != null
-                                ? theme.textTheme.bodyLarge
-                                : theme.textTheme.bodyLarge?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                          ),
-                        ),
+                        errorText: fieldState.errorText,
                       ),
                     ),
                   ),
@@ -291,15 +260,7 @@ class _RegistrarCitaPantallaState extends ConsumerState<RegistrarCitaPantalla> {
               ),
 
               const SizedBox(height: 28),
-
-              // ── Detalles ──────────────────────────────────────────────────
-              Text(
-                'Detalles',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Detalles'),
               const SizedBox(height: 12),
 
               TextFormField(
@@ -329,27 +290,10 @@ class _RegistrarCitaPantallaState extends ConsumerState<RegistrarCitaPantalla> {
 
               const SizedBox(height: 36),
 
-              FilledButton(
-                onPressed: _guardando ? null : _guardar,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: _guardando
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        _esEdicion ? 'Guardar cambios' : 'Registrar cita',
-                        style: const TextStyle(fontSize: 16),
-                      ),
+              BotonGuardar(
+                guardando: _guardando,
+                onPressed: _guardar,
+                etiqueta: _esEdicion ? 'Guardar cambios' : 'Registrar cita',
               ),
             ],
           ),

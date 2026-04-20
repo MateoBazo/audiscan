@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../models/paciente_modelo.dart';
 import '../providers/pacientes_provider.dart';
+import '../../../core/widgets/boton_guardar.dart';
+import '../../../core/widgets/campo_fecha.dart';
+import '../../../core/widgets/encabezado_seccion.dart';
 
 class RegistrarPacientePantalla extends ConsumerStatefulWidget {
-  // Si paciente viene con datos, el formulario actúa en modo edición
   final PacienteModelo? paciente;
 
   const RegistrarPacientePantalla({super.key, this.paciente});
@@ -127,8 +128,6 @@ class _RegistrarPacientePantallaState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(_esEdicion ? 'Editar Paciente' : 'Nuevo Paciente'),
@@ -140,14 +139,7 @@ class _RegistrarPacientePantallaState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Datos personales ──────────────────────────────────────────
-              Text(
-                'Datos personales',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Datos personales'),
               const SizedBox(height: 12),
 
               TextFormField(
@@ -169,39 +161,17 @@ class _RegistrarPacientePantallaState
               ),
               const SizedBox(height: 16),
 
-              InkWell(
+              CampoFecha(
+                fecha: _fechaNacimiento,
+                etiqueta: 'Fecha de nacimiento',
+                iconoPrefijo: Icons.cake_outlined,
+                iconoSufijo: Icons.calendar_today_outlined,
+                textoPorDefecto: 'Seleccionar fecha',
                 onTap: _seleccionarFecha,
-                borderRadius: BorderRadius.circular(4),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Fecha de nacimiento',
-                    prefixIcon: Icon(Icons.cake_outlined),
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.calendar_today_outlined),
-                  ),
-                  child: Text(
-                    _fechaNacimiento != null
-                        ? DateFormat('dd/MM/yyyy').format(_fechaNacimiento!)
-                        : 'Seleccionar fecha',
-                    style: _fechaNacimiento != null
-                        ? theme.textTheme.bodyLarge
-                        : theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                  ),
-                ),
               ),
 
               const SizedBox(height: 28),
-
-              // ── Información de contacto ───────────────────────────────────
-              Text(
-                'Información de contacto',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const EncabezadoSeccion(titulo: 'Información de contacto'),
               const SizedBox(height: 12),
 
               TextFormField(
@@ -247,27 +217,10 @@ class _RegistrarPacientePantallaState
 
               const SizedBox(height: 36),
 
-              FilledButton(
-                onPressed: _guardando ? null : _guardar,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: _guardando
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        _esEdicion ? 'Guardar cambios' : 'Registrar paciente',
-                        style: const TextStyle(fontSize: 16),
-                      ),
+              BotonGuardar(
+                guardando: _guardando,
+                onPressed: _guardar,
+                etiqueta: _esEdicion ? 'Guardar cambios' : 'Registrar paciente',
               ),
             ],
           ),
