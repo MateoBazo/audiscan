@@ -1,29 +1,48 @@
 import os
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 
-# Variables de entorno para pruebas
-# Se definen ANTES de importar cualquier módulo de la app para que
-# pydantic-settings no falle al intentar leer un .env inexistente.
-
-os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
-os.environ.setdefault("SUPABASE_ANON_KEY", "test-anon-key")
-os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "test-service-role-key")
-os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://test:test@localhost/test")
+# Variables de entorno falsas
+os.environ.setdefault("SUPABASE_URL", "https://mock.supabase.co")
+os.environ.setdefault("SUPABASE_ANON_KEY", "mock-anon-key")
+os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "mock-service-role-key")
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://mock:mock@localhost/mock")
 os.environ.setdefault("ENVIRONMENT", "test")
 os.environ.setdefault("DEBUG", "false")
 
 
-# Fixtures reutilizables 
+#Mock de Supabase
+@pytest.fixture(autouse=True)
+def mock_supabase_client():
+    cliente_falso = MagicMock()
+
+    # Simulamos la cadena de llamadas que usa el código real:
+    # admin.table("x").select("*").eq("id", ...).execute()
+    cliente_falso.table.return_value.select.return_value \
+        .eq.return_value.maybe_single.return_value \
+        .execute.return_value.data = None
+
+    with patch("app.core.supabase_client.create_client", return_value=cliente_falso):
+        yield cliente_falso
+
+
+#Mock de SQLAlchemy
+@pytest.fixture(autouse=True)
+def mock_sqlalchemy_engine():
+    motor_falso = MagicMock()
+
+    with patch(
+        "sqlalchemy.ext.asyncio.create_async_engine",
+        return_value=motor_falso,
+    ):
+        yield motor_falso
+
+
+#Datos 
 @pytest.fixture
 def datos_registro_valido() -> dict:
-    """
-    Fixture: datos mínimos y válidos para crear un RegisterRequest.
-
-    Retorna un diccionario con todos los campos requeridos correctamente
-    formateados. Sirve como base para tests que necesitan partir de un
-    estado válido y modificar solo el campo bajo prueba.
-    """
     return {
         "email": "doctor@audiscan.bo",
         "password": "Segura123!",
@@ -35,10 +54,4 @@ def datos_registro_valido() -> dict:
 
 @pytest.fixture
 def estados_esperados() -> set:
-    """
-    Fixture: conjunto de estados clínicos válidos para una cita.
-
-    Define el contrato de negocio: estos son los únicos estados que
-    el sistema debe aceptar para el campo `estado` de una cita médica.
-    """
     return {"programada", "completada", "cancelada", "no_asistio"}
