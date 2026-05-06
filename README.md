@@ -49,7 +49,7 @@ audiscan/
 ### 1. Clonar y configurar entorno
 
 ```bash
-git clone https://github.com/TU_USUARIO/audiscan.git
+git clone https://github.com/MateoBazo/audiscan.git
 cd audiscan
 cp backend/.env.example backend/.env
 # Editar backend/.env con tus credenciales de Supabase
