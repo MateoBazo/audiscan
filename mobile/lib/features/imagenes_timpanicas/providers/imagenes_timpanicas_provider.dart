@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/imagenes_timpanicas_repositorio.dart';
 import '../models/imagen_timpanica_modelo.dart';
 
-// ─── Estado ───────────────────────────────────────────────────────────────────
+// Estado
 
 class ImagenesTimpanicasEstado {
   final List<ImagenTimpanicaModelo> imagenes;
@@ -36,7 +36,7 @@ class ImagenesTimpanicasEstado {
   }
 }
 
-// ─── Notifier ─────────────────────────────────────────────────────────────────
+// Notifier
 
 class ImagenesTimpanicasNotifier
     extends StateNotifier<ImagenesTimpanicasEstado> {
@@ -96,7 +96,7 @@ class ImagenesTimpanicasNotifier
   }
 }
 
-// ─── Provider family (uno por registro clínico) ───────────────────────────────
+//  Provider family (uno por registro clínico) 
 
 final imagenesTimpanicasProvider = StateNotifierProvider.family<
     ImagenesTimpanicasNotifier, ImagenesTimpanicasEstado, String>(

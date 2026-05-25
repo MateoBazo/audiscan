@@ -37,7 +37,7 @@ class ResultadoImagenTimpanicaPantalla extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Encabezado ────────────────────────────────────────────────
+            // Encabezado 
             Row(
               children: [
                 Icon(Icons.hearing, color: theme.colorScheme.primary),
@@ -66,7 +66,7 @@ class ResultadoImagenTimpanicaPantalla extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // ── Imagen timpánica ──────────────────────────────────────────
+            // Imagen timpánica
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.network(
@@ -109,17 +109,17 @@ class ResultadoImagenTimpanicaPantalla extends StatelessWidget {
                 color: theme.colorScheme.error,
               ),
             ] else ...[
-              // ── Predicción principal ──────────────────────────────────
+              //  Predicción principal 
               _TarjetaPrediccion(analisis: analisis, theme: theme),
 
               const SizedBox(height: 16),
 
-              // ── Probabilidades ────────────────────────────────────────
+              //  Probabilidades 
               _TarjetaProbabilidades(analisis: analisis, theme: theme),
 
               const SizedBox(height: 16),
 
-              // ── Advertencia mock ──────────────────────────────────────
+              // Advertencia mock 
               if (analisis.esMock)
                 _TarjetaInfo(
                   icono: Icons.science_outlined,
@@ -129,7 +129,7 @@ class ResultadoImagenTimpanicaPantalla extends StatelessWidget {
                   color: theme.colorScheme.tertiary,
                 ),
 
-              // ── Aviso clínico ─────────────────────────────────────────
+              // Aviso clínico 
               if (!analisis.esMock)
                 _TarjetaInfo(
                   icono: Icons.info_outline,
@@ -142,7 +142,7 @@ class ResultadoImagenTimpanicaPantalla extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // ── Botón volver al registro ──────────────────────────────────
+            //  Botón volver al registro
             OutlinedButton.icon(
               onPressed: () => context.go(
                 '/registros-clinicos/detalle',
@@ -164,7 +164,7 @@ class ResultadoImagenTimpanicaPantalla extends StatelessWidget {
   }
 }
 
-// ─── Tarjeta: predicción principal ───────────────────────────────────────────
+// Tarjeta: predicción principal
 
 class _TarjetaPrediccion extends StatelessWidget {
   final AnalisisIAModelo analisis;
@@ -252,7 +252,7 @@ class _TarjetaPrediccion extends StatelessWidget {
   }
 }
 
-// ─── Tarjeta: barras de probabilidad ─────────────────────────────────────────
+// Tarjeta: barras de probabilidad 
 
 class _TarjetaProbabilidades extends StatelessWidget {
   final AnalisisIAModelo analisis;
@@ -374,7 +374,7 @@ class _BarraProbabilidad extends StatelessWidget {
   }
 }
 
-// ─── Tarjeta: info / aviso ────────────────────────────────────────────────────
+// Tarjeta: info / aviso 
 
 class _TarjetaInfo extends StatelessWidget {
   final IconData icono;

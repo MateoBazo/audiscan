@@ -1,40 +1,4 @@
 #!/usr/bin/env python3
-"""
-Prepara el dataset de Kaggle 'ucimachinelearning/otoscopic-image-dataset'
-para el entrenamiento del clasificador timpánico.
-
-Pasos que realiza:
-  1. Lee las imágenes de las 4 clases relevantes (descarta Myringosclerosis)
-  2. Mezcla aleatoriamente cada clase
-  3. Divide en train (80 %) y val (20 %)
-  4. Copia los archivos a la estructura que espera entrenar_timpanico.py
-
-Estructura de entrada esperada (carpeta del zip descomprimido):
-    <directorio_origen>/
-    ├── Acute Otitis Media (AOM)/
-    ├── Cerumen Impaction/
-    ├── Chronic Otitis Media (COM)/
-    ├── Myringosclerosis/          ← se omite
-    └── Normal/
-
-Estructura de salida generada:
-    <directorio_destino>/
-    ├── train/
-    │   ├── normal/
-    │   ├── otitis_aguda/
-    │   ├── otitis_cronica/
-    │   └── cerumen/
-    └── val/
-        ├── normal/
-        ├── otitis_aguda/
-        ├── otitis_cronica/
-        └── cerumen/
-
-Uso:
-    cd backend
-    python scripts/preparar_dataset.py --origen ./otoscopic-image-dataset --destino ./dataset
-"""
-
 import argparse
 import random
 import shutil

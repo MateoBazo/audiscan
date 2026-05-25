@@ -1,25 +1,4 @@
 #!/usr/bin/env python3
-"""
-Script de entrenamiento del clasificador timpánico.
-Arquitectura: EfficientNetB3 + Transfer Learning + Fine-tuning
-
-Estructura esperada del dataset:
-    dataset/
-    ├── train/
-    │   ├── normal/
-    │   ├── otitis_cronica/
-    │   ├── otitis_aguda/
-    │   └── cerumen/
-    └── val/
-        ├── normal/
-        ├── otitis_cronica/
-        ├── otitis_aguda/
-        └── cerumen/
-
-Uso:
-    cd backend
-    python scripts/entrenar_timpanico.py --directorio_dataset ./dataset
-"""
 
 import argparse
 from pathlib import Path
@@ -30,7 +9,7 @@ RUTA_MODELO_SALIDA = (
     Path(__file__).parent.parent / "ai" / "models" / "tympanic_v1.keras"
 )
 
-# ─── Hiperparámetros ──────────────────────────────────────────────────────────
+#  Hiperparámetros 
 EPOCHS_FASE1 = 10       # Base congelada — entrena solo el head
 EPOCHS_FASE2 = 20       # Fine-tuning de las últimas capas
 BATCH_SIZE = 32

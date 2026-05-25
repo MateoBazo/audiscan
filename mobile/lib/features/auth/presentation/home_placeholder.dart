@@ -91,7 +91,7 @@ class HomePlaceholder extends ConsumerWidget {
   }
 }
 
-// ─── Sección citas de hoy ─────────────────────────────────────────────────────
+//Sección citas de hoy
 
 class _SeccionCitasHoy extends ConsumerWidget {
   const _SeccionCitasHoy();
@@ -284,7 +284,7 @@ class _CargandoCitasVista extends StatelessWidget {
   }
 }
 
-// ─── Tarjetas de módulo ───────────────────────────────────────────────────────
+// Tarjetas de módulo 
 
 class _TarjetaModuloBadge extends StatelessWidget {
   final IconData icono;

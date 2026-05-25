@@ -66,7 +66,7 @@ class DetalleCitaPantalla extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Paciente ──────────────────────────────────────────────────
+            // Paciente
             _SeccionHeader(
               icono: Icons.person_outline,
               titulo: citaActual.nombrePaciente ?? 'Paciente',
@@ -75,7 +75,7 @@ class DetalleCitaPantalla extends ConsumerWidget {
             ),
             const SizedBox(height: 20),
 
-            // ── Estado ────────────────────────────────────────────────────
+            // Estado
             Row(
               children: [
                 Icon(_iconosEstado[citaActual.estado], color: color, size: 20),
@@ -99,7 +99,7 @@ class DetalleCitaPantalla extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // ── Fecha y hora ──────────────────────────────────────────────
+            // Fecha y hora
             _TarjetaInfo(
               children: [
                 _FilaInfo(
@@ -150,7 +150,7 @@ class DetalleCitaPantalla extends ConsumerWidget {
 
             const SizedBox(height: 32),
 
-            // ── Acciones ──────────────────────────────────────────────────
+            // Acciones 
             _BotonAccion(
               icono: Icons.folder_open_outlined,
               etiqueta: 'Ver historial del paciente',
@@ -189,8 +189,7 @@ class DetalleCitaPantalla extends ConsumerWidget {
   }
 }
 
-// ─── Widgets auxiliares ───────────────────────────────────────────────────────
-
+// Widgets auxiliares
 class _SeccionHeader extends StatelessWidget {
   final IconData icono;
   final String titulo;

@@ -10,6 +10,10 @@ build/
 .venv/
 venv/
 env/
+.pytest_cache/
+
+# Reportes generados
+backend/*.html
 
 # Entornos y secretos
 .env

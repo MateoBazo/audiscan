@@ -58,4 +58,12 @@ class PacienteModelo {
   String? get telefono => informacionContacto?['telefono'] as String?;
   String? get emailContacto => informacionContacto?['email'] as String?;
   String? get direccion => informacionContacto?['direccion'] as String?;
+
+  double? get latitud => informacionContacto?['latitud'] != null
+      ? (informacionContacto!['latitud'] as num).toDouble()
+      : null;
+
+  double? get longitud => informacionContacto?['longitud'] != null
+      ? (informacionContacto!['longitud'] as num).toDouble()
+      : null;
 }

@@ -53,6 +53,10 @@ dependencies:
   # ── Teleconsulta ──────────────────────────────────────
   flutter_webrtc: ^1.4.1
 
+  # ── Mapas ─────────────────────────────────────────────
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.1
+
   # ── Permisos ──────────────────────────────────────────
   permission_handler: ^11.3.1
 

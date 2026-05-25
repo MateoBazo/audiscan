@@ -5,8 +5,7 @@ import '../data/auth_repository.dart';
 import '../models/auth_models.dart';
 import '../../../core/api/api_client.dart';
 
-// ─── Estado ──────────────────────────────────────────────────────────────────
-
+// Estado
 class AuthState {
   final UserModel? user;
   final bool isLoading;
@@ -39,7 +38,7 @@ class AuthState {
   }
 }
 
-// ─── Notifier ─────────────────────────────────────────────────────────────────
+// Notifier
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
@@ -128,7 +127,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
+// Provider 
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>(
   (ref) => AuthNotifier(

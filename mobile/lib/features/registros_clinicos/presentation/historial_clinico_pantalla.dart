@@ -11,6 +11,7 @@ import '../../../core/widgets/vista_vacia.dart';
 import '../../../core/widgets/vista_error.dart';
 import '../../../core/widgets/fondo_dismissible.dart';
 import '../../../core/widgets/dialogo_confirmar_eliminacion.dart';
+import '../../../core/widgets/mapa_miniatura.dart';
 
 class HistorialClinicoPantalla extends ConsumerWidget {
   final PacienteModelo paciente;
@@ -55,6 +56,8 @@ class HistorialClinicoPantalla extends ConsumerWidget {
       body: Column(
         children: [
           _HeaderPaciente(paciente: paciente),
+          if (paciente.latitud != null && paciente.longitud != null)
+            _SeccionUbicacion(paciente: paciente),
           Expanded(child: _Cuerpo(estado: estado, paciente: paciente)),
         ],
       ),
@@ -124,6 +127,57 @@ class _HeaderPaciente extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Sección ubicación ────────────────────────────────────────────────────────
+
+class _SeccionUbicacion extends StatelessWidget {
+  final PacienteModelo paciente;
+
+  const _SeccionUbicacion({required this.paciente});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MapaMiniatura(
+            latitud: paciente.latitud!,
+            longitud: paciente.longitud!,
+          ),
+          if (paciente.direccion != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 14,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      paciente.direccion!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 8),
         ],
       ),
     );

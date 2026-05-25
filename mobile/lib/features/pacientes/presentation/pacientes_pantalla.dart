@@ -117,7 +117,7 @@ class _PacientesPantallaState extends ConsumerState<PacientesPantalla> {
   }
 }
 
-// ─── Cuerpo principal ─────────────────────────────────────────────────────────
+// Cuerpo principal
 
 class _Cuerpo extends ConsumerWidget {
   final PacientesEstado estado;
@@ -165,7 +165,7 @@ class _Cuerpo extends ConsumerWidget {
   }
 }
 
-// ─── Sin resultados de búsqueda ───────────────────────────────────────────────
+//  Sin resultados de búsqueda 
 
 class _SinResultadosVista extends StatelessWidget {
   @override
@@ -197,7 +197,7 @@ class _SinResultadosVista extends StatelessWidget {
   }
 }
 
-// ─── Tarjeta de paciente ──────────────────────────────────────────────────────
+// Tarjeta de paciente
 
 class _TarjetaPaciente extends ConsumerWidget {
   final PacienteModelo paciente;

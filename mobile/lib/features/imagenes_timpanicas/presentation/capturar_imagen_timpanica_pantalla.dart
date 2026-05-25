@@ -84,7 +84,7 @@ class _CapturarImagenTimpanicaPantallaState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── Selección de imagen ───────────────────────────────────────
+            // Selección de imagen 
             _archivoSeleccionado == null
                 ? _SelectorImagen(onSeleccionar: _seleccionarImagen)
                 : _VistaPrevia(
@@ -95,7 +95,7 @@ class _CapturarImagenTimpanicaPantallaState
 
             const SizedBox(height: 28),
 
-            // ── Selección de oído ─────────────────────────────────────────
+            // Selección de oído 
             Text(
               'Oído examinado',
               style: theme.textTheme.titleSmall?.copyWith(
@@ -111,7 +111,7 @@ class _CapturarImagenTimpanicaPantallaState
 
             const SizedBox(height: 32),
 
-            // ── Botón subir ───────────────────────────────────────────────
+            // Botón subir
             FilledButton.icon(
               onPressed: _archivoSeleccionado != null && !estado.subiendo
                   ? _subirImagen
@@ -152,7 +152,7 @@ class _CapturarImagenTimpanicaPantallaState
   }
 }
 
-// ─── Widget: selector de imagen ───────────────────────────────────────────────
+// Widget: selector de imagen
 
 class _SelectorImagen extends StatelessWidget {
   final void Function(ImageSource) onSeleccionar;
@@ -256,7 +256,7 @@ class _VistaPrevia extends StatelessWidget {
   }
 }
 
-// ─── Widget: selector de oído ─────────────────────────────────────────────────
+// Widget: selector de oído 
 
 class _SelectorOido extends StatelessWidget {
   final String oido;

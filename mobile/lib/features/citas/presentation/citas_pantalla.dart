@@ -10,7 +10,7 @@ import '../../../core/widgets/vista_error.dart';
 import '../../../core/widgets/fondo_dismissible.dart';
 import '../../../core/widgets/dialogo_confirmar_eliminacion.dart';
 
-// ─── Constantes de estado ─────────────────────────────────────────────────────
+// Constantes de estado 
 
 const _etiquetasEstado = {
   'programada': 'Programada',
@@ -37,7 +37,7 @@ Color _colorEstado(BuildContext context, String estado) {
   };
 }
 
-// ─── Pantalla principal ───────────────────────────────────────────────────────
+//  Pantalla principal 
 
 class CitasPantalla extends ConsumerWidget {
   const CitasPantalla({super.key});
@@ -89,7 +89,7 @@ class CitasPantalla extends ConsumerWidget {
   }
 }
 
-// ─── Chips de filtro ──────────────────────────────────────────────────────────
+// Chips de filtro 
 
 class _FiltroEstado extends ConsumerWidget {
   final String? filtroActual;
@@ -128,7 +128,7 @@ class _FiltroEstado extends ConsumerWidget {
   }
 }
 
-// ─── Cuerpo ───────────────────────────────────────────────────────────────────
+// Cuerpo 
 
 class _Cuerpo extends ConsumerWidget {
   final CitasEstado estado;
@@ -169,7 +169,7 @@ class _Cuerpo extends ConsumerWidget {
   }
 }
 
-// ─── Tarjeta de cita ──────────────────────────────────────────────────────────
+// Tarjeta de cita 
 
 class _TarjetaCita extends ConsumerWidget {
   final CitaModelo cita;
@@ -314,7 +314,7 @@ class _TarjetaCita extends ConsumerWidget {
   }
 }
 
-// ─── Chip de estado ───────────────────────────────────────────────────────────
+// Chip de estado 
 
 class _ChipEstado extends StatelessWidget {
   final String estado;

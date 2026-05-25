@@ -33,6 +33,10 @@ class DetalleRegistroClinicoPantalla extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Registro clínico'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/pacientes/historial', extra: paciente),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),

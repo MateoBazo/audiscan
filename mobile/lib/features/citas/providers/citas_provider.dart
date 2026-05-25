@@ -4,7 +4,7 @@ import '../data/citas_repositorio.dart';
 import '../models/cita_modelo.dart';
 import '../../pacientes/providers/pacientes_provider.dart';
 
-// ─── Estado ───────────────────────────────────────────────────────────────────
+//  Estado
 
 class CitasEstado {
   final List<CitaModelo> citas;
@@ -44,7 +44,7 @@ class CitasEstado {
 
 const _sentinel = Object();
 
-// ─── Notifier ─────────────────────────────────────────────────────────────────
+// Notifier
 
 class CitasNotifier extends StateNotifier<CitasEstado> {
   final CitasRepositorio _repositorio;
@@ -183,7 +183,7 @@ class CitasNotifier extends StateNotifier<CitasEstado> {
   }
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
+//  Provider 
 
 final citasProvider = StateNotifierProvider<CitasNotifier, CitasEstado>(
   (ref) => CitasNotifier(ref.read(citasRepositorioProvider), ref),

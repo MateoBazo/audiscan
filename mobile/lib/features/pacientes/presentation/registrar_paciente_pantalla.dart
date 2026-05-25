@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 import '../models/paciente_modelo.dart';
 import '../providers/pacientes_provider.dart';
 import '../../../core/widgets/boton_guardar.dart';
 import '../../../core/widgets/campo_fecha.dart';
 import '../../../core/widgets/encabezado_seccion.dart';
+import '../../../core/widgets/mapa_miniatura.dart';
+import '../../../core/widgets/selector_mapa_pantalla.dart';
 
 class RegistrarPacientePantalla extends ConsumerStatefulWidget {
   final PacienteModelo? paciente;
@@ -26,6 +29,8 @@ class _RegistrarPacientePantallaState
   late final TextEditingController _direccionCtrl;
 
   DateTime? _fechaNacimiento;
+  double? _latitud;
+  double? _longitud;
   bool _guardando = false;
 
   bool get _esEdicion => widget.paciente != null;
@@ -39,6 +44,8 @@ class _RegistrarPacientePantallaState
     _emailContactoCtrl = TextEditingController(text: p?.emailContacto ?? '');
     _direccionCtrl = TextEditingController(text: p?.direccion ?? '');
     _fechaNacimiento = p?.fechaNacimiento;
+    _latitud = p?.latitud;
+    _longitud = p?.longitud;
   }
 
   @override
@@ -65,6 +72,25 @@ class _RegistrarPacientePantallaState
     }
   }
 
+  Future<void> _seleccionarUbicacion() async {
+    final puntoInicial = _latitud != null && _longitud != null
+        ? LatLng(_latitud!, _longitud!)
+        : null;
+
+    final resultado = await Navigator.of(context).push<LatLng>(
+      MaterialPageRoute(
+        builder: (_) => SelectorMapaPantalla(puntoInicial: puntoInicial),
+      ),
+    );
+
+    if (resultado != null) {
+      setState(() {
+        _latitud = resultado.latitude;
+        _longitud = resultado.longitude;
+      });
+    }
+  }
+
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -79,6 +105,10 @@ class _RegistrarPacientePantallaState
     }
     if (_direccionCtrl.text.trim().isNotEmpty) {
       informacionContacto['direccion'] = _direccionCtrl.text.trim();
+    }
+    if (_latitud != null && _longitud != null) {
+      informacionContacto['latitud'] = _latitud;
+      informacionContacto['longitud'] = _longitud;
     }
 
     final bool exito;
@@ -128,6 +158,8 @@ class _RegistrarPacientePantallaState
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_esEdicion ? 'Editar Paciente' : 'Nuevo Paciente'),
@@ -214,6 +246,41 @@ class _RegistrarPacientePantallaState
                   border: OutlineInputBorder(),
                 ),
               ),
+              const SizedBox(height: 12),
+
+              OutlinedButton.icon(
+                onPressed: _seleccionarUbicacion,
+                icon: const Icon(Icons.map_outlined),
+                label: Text(
+                  _latitud != null ? 'Cambiar ubicación en mapa' : 'Ubicar en mapa',
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+
+              if (_latitud != null && _longitud != null) ...[
+                const SizedBox(height: 12),
+                MapaMiniatura(latitud: _latitud!, longitud: _longitud!),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => setState(() {
+                      _latitud = null;
+                      _longitud = null;
+                    }),
+                    icon: const Icon(Icons.close, size: 16),
+                    label: const Text('Quitar ubicación'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.error,
+                    ),
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 36),
 

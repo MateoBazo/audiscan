@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/pacientes_repositorio.dart';
 import '../models/paciente_modelo.dart';
 
-// ─── Estado ───────────────────────────────────────────────────────────────────
+//  Estado 
 
 class PacientesEstado {
   final List<PacienteModelo> pacientes;
@@ -30,8 +30,7 @@ class PacientesEstado {
   }
 }
 
-// ─── Notifier ─────────────────────────────────────────────────────────────────
-
+//  Notifier
 class PacientesNotifier extends StateNotifier<PacientesEstado> {
   final PacientesRepositorio _repositorio;
 
@@ -129,7 +128,7 @@ class PacientesNotifier extends StateNotifier<PacientesEstado> {
   }
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
+//  Provider
 
 final pacientesProvider =
     StateNotifierProvider<PacientesNotifier, PacientesEstado>(

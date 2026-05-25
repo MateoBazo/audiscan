@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/registros_clinicos_repositorio.dart';
 import '../models/registro_clinico_modelo.dart';
 
-// ─── Estado ───────────────────────────────────────────────────────────────────
+// Estado 
 
 class RegistrosClinicosEstado {
   final List<RegistroClinicoModelo> registros;
@@ -30,7 +30,7 @@ class RegistrosClinicosEstado {
   }
 }
 
-// ─── Notifier ─────────────────────────────────────────────────────────────────
+//  Notifier
 
 class RegistrosClinicosNotifier
     extends StateNotifier<RegistrosClinicosEstado> {
