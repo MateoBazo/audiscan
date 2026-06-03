@@ -50,12 +50,14 @@ pipeline {
                         fastapi==0.115.0 \
                         pydantic==2.8.2 \
                         pydantic-settings==2.4.0 \
-                        python-jose[cryptography]==3.3.0 \
-                        passlib[bcrypt]==1.7.4 \
+                        "python-jose[cryptography]==3.3.0" \
+                        "passlib[bcrypt]==1.7.4" \
                         python-multipart==0.0.9 \
                         email-validator==2.3.0 \
                         httpx==0.27.2 \
                         python-dotenv==1.0.1 \
+                        "sqlalchemy[asyncio]==2.0.35" \
+                        asyncpg==0.29.0 \
                         pytest==8.3.3 \
                         pytest-asyncio==0.23.8 \
                         pytest-html==4.1.1 \
@@ -126,10 +128,10 @@ pipeline {
     // ── Notificación final en consola ─────────────────────────────────────────
     post {
         success {
-            echo '✅ Pipeline completado — todos los tests pasaron.'
+            echo 'Pipeline completado — todos los tests pasaron.'
         }
         failure {
-            echo '❌ Pipeline fallido — revisa los tests en el reporte HTML.'
+            echo 'Pipeline fallido — revisa los tests en el reporte HTML.'
         }
     }
 }
