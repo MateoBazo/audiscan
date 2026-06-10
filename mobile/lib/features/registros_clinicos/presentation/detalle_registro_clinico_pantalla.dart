@@ -1,7 +1,11 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/registro_clinico_modelo.dart';
 import '../providers/registros_clinicos_provider.dart';
 import '../../pacientes/models/paciente_modelo.dart';
@@ -9,6 +13,8 @@ import '../../imagenes_timpanicas/models/imagen_timpanica_modelo.dart';
 import '../../imagenes_timpanicas/providers/imagenes_timpanicas_provider.dart';
 import '../../audiometria/models/audiometria_modelo.dart';
 import '../../audiometria/providers/audiometria_provider.dart';
+import '../../reports/presentation/visor_pdf_pantalla.dart';
+import '../../../core/api/api_client.dart';
 import '../../../core/utils/color_paciente.dart';
 import '../../../core/widgets/dialogo_confirmar_eliminacion.dart';
 import '../../../core/widgets/encabezado_seccion.dart';
@@ -201,6 +207,11 @@ class DetalleRegistroClinicoPantalla extends ConsumerWidget {
             ),
 
             const SizedBox(height: 28),
+
+            // ── Botón PDF ─────────────────────────────────────────────────
+            _BotonGenerarPdf(registro: registroActual, paciente: paciente),
+
+            const SizedBox(height: 10),
 
             // ── Botón editar ──────────────────────────────────────────────
             FilledButton.icon(
@@ -691,6 +702,95 @@ class _TextoVacio extends StatelessWidget {
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+      ),
+    );
+  }
+}
+
+// ─── Botón generar PDF ────────────────────────────────────────────────────────
+
+class _BotonGenerarPdf extends ConsumerStatefulWidget {
+  final RegistroClinicoModelo registro;
+  final PacienteModelo paciente;
+
+  const _BotonGenerarPdf({required this.registro, required this.paciente});
+
+  @override
+  ConsumerState<_BotonGenerarPdf> createState() => _BotonGenerarPdfState();
+}
+
+class _BotonGenerarPdfState extends ConsumerState<_BotonGenerarPdf> {
+  bool _generando = false;
+
+  Future<void> _generarPdf() async {
+    setState(() => _generando = true);
+    try {
+      final dio = ref.read(dioProvider);
+      final respuesta = await dio.get(
+        '/reportes/registro/${widget.registro.id}',
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(seconds: 60),
+        ),
+      );
+
+      final directorio = await getTemporaryDirectory();
+      final ruta = '${directorio.path}/reporte_${widget.registro.id.substring(0, 8)}.pdf';
+      final archivo = File(ruta);
+      await archivo.writeAsBytes(respuesta.data as List<int>);
+
+      if (mounted) {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => VisorPdfPantalla(
+            rutaArchivo: ruta,
+            titulo: 'Reporte — ${widget.paciente.nombreCompleto}',
+          ),
+        ));
+      }
+    } on DioException catch (e) {
+      if (mounted) {
+        final mensaje = (e.response?.data is Map &&
+                (e.response!.data as Map).containsKey('detail'))
+            ? e.response!.data['detail'] as String
+            : 'Error al generar el PDF. Verificá tu conexión.';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(mensaje),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error inesperado al generar el PDF.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _generando ? null : _generarPdf,
+      icon: _generando
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.picture_as_pdf_outlined),
+      label: Text(_generando ? 'Generando PDF...' : 'Generar reporte PDF'),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

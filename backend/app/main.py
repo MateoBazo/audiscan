@@ -7,6 +7,7 @@ from app.api.citas import router as citas_router
 from app.api.imagenes_timpanicas import router as imagenes_timpanicas_router
 from app.api.pacientes import router as pacientes_router
 from app.api.registros_clinicos import router as registros_clinicos_router
+from app.api.reportes import router as reportes_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -33,6 +34,7 @@ app.include_router(citas_router, prefix="/api/v1")
 app.include_router(registros_clinicos_router, prefix="/api/v1")
 app.include_router(imagenes_timpanicas_router, prefix="/api/v1")
 app.include_router(audiometria_router, prefix="/api/v1")
+app.include_router(reportes_router, prefix="/api/v1")
 
 
 # ─── Health check ─────────────────────────────────────────────────────────────
