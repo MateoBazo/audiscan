@@ -53,6 +53,10 @@ class ImagenesTimpanicasRepositorio {
     return ImagenTimpanicaModelo.fromJson(
         respuesta.data as Map<String, dynamic>);
   }
+
+  Future<void> eliminar(String idImagen) async {
+    await _dio.delete('/imagenes-timpanicas/$idImagen');
+  }
 }
 
 final imagenesTimpanicasRepositorioProvider =

@@ -296,3 +296,49 @@ def obtener_grad_cam(
     png_bytes = clasificador_timpanico.generar_grad_cam(contenido)
 
     return Response(content=png_bytes, media_type="image/png")
+
+
+@router.delete(
+    "/{imagen_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Eliminar imagen timpánica y su análisis IA",
+)
+def eliminar_imagen(
+    imagen_id: str,
+    usuario_actual: UserProfile = Depends(get_current_user),
+) -> None:
+    admin = get_supabase_admin()
+
+    resp = (
+        admin.table("imagenes_timpanicas")
+        .select("id, ruta_imagen")
+        .eq("id", imagen_id)
+        .eq("id_doctor", usuario_actual.id)
+        .maybe_single()
+        .execute()
+    )
+
+    if resp is None or resp.data is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Imagen no encontrada",
+        )
+
+    # Intentar eliminar el archivo del Storage (no bloquea si falla)
+    url_imagen = resp.data["ruta_imagen"]
+    marcador = f"/object/public/{BUCKET}/"
+    idx = url_imagen.find(marcador)
+    if idx != -1:
+        ruta_relativa = url_imagen[idx + len(marcador):].rstrip("?")
+        try:
+            admin.storage.from_(BUCKET).remove([ruta_relativa])
+        except Exception:
+            pass
+
+    try:
+        admin.table("imagenes_timpanicas").delete().eq("id", imagen_id).execute()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar imagen: {str(e)}",
+        )

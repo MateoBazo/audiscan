@@ -1,78 +1,160 @@
 #!/usr/bin/env python3
 
 import argparse
+import random
 from pathlib import Path
+
+import numpy as np
+from PIL import Image
 
 CLASES = ["normal", "otitis_cronica", "otitis_aguda", "cerumen"]
 TAMANO_ENTRADA = (224, 224)
 RUTA_MODELO_SALIDA = (
     Path(__file__).parent.parent / "ai" / "models" / "tympanic_v1.keras"
 )
+EXTENSIONES = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
 
-#  Hiperparámetros 
-EPOCHS_FASE1 = 10       # Base congelada — entrena solo el head
-EPOCHS_FASE2 = 20       # Fine-tuning de las últimas capas
+#  Hiperparámetros
+EPOCHS_FASE1 = 30
+EPOCHS_FASE2 = 50
 BATCH_SIZE = 32
 LR_FASE1 = 1e-3
-LR_FASE2 = 1e-5
-CAPAS_FINE_TUNING = 30  # Últimas N capas de EfficientNetB3 a descongelar
+LR_FASE2 = 3e-5
+CAPAS_FINE_TUNING = 40
+LABEL_SMOOTHING = 0.05
+
+
+def construir_transformaciones():
+    import albumentations as A
+
+    entrenamiento = A.Compose([
+        A.HorizontalFlip(p=0.5),
+        A.Rotate(limit=15, border_mode=0, p=0.5),
+        A.Affine(
+            translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)},
+            scale=(0.85, 1.15),
+            border_mode=0,
+            p=0.5,
+        ),
+        # Variación de exposición y contraste — simula distintos otoscopios
+        A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.8),
+        A.RandomGamma(gamma_limit=(80, 120), p=0.3),
+        # Variación de color — simula distinta iluminación y temperatura de luz
+        A.HueSaturationValue(
+            hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.7
+        ),
+        # Mejora de contraste local — simula distinto procesamiento de cámara
+        A.CLAHE(clip_limit=2.0, tile_grid_size=(8, 8), p=0.4),
+        # Ruido y desenfoque — simula calidad variable de imagen
+        A.GaussNoise(std_range=(0.01, 0.05), p=0.4),
+        A.OneOf([
+            A.Blur(blur_limit=3, p=1.0),
+            A.GaussianBlur(blur_limit=3, p=1.0),
+        ], p=0.3),
+        # Escala de grises parcial — reduce dependencia de color específico
+        A.ToGray(p=0.15),
+    ])
+
+    return entrenamiento
 
 
 def construir_modelo(num_clases: int):
     import tensorflow as tf
-    from tensorflow.keras import Model, layers
-    from tensorflow.keras.applications import EfficientNetB3
+    from tensorflow.keras import Model, layers, regularizers
+    from tensorflow.keras.applications import EfficientNetB0
 
-    base = EfficientNetB3(
+    base = EfficientNetB0(
         weights="imagenet",
         include_top=False,
         input_shape=(*TAMANO_ENTRADA, 3),
     )
-    base.trainable = False  # Fase 1: base completamente congelada
+    base.trainable = False
 
     entradas = base.input
     x = base.output
     x = layers.GlobalAveragePooling2D(name="gap")(x)
     x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.4)(x)
+    x = layers.Dense(
+        128,
+        activation="relu",
+        kernel_regularizer=regularizers.l2(1e-4),
+    )(x)
     x = layers.Dropout(0.3)(x)
-    x = layers.Dense(256, activation="relu")(x)
-    x = layers.Dropout(0.2)(x)
     salidas = layers.Dense(num_clases, activation="softmax")(x)
 
     return Model(inputs=entradas, outputs=salidas), base
 
 
 def crear_generadores(directorio_dataset: Path):
+    import tensorflow as tf
     from tensorflow.keras.applications.efficientnet import preprocess_input
-    from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-    gen_entrenamiento = ImageDataGenerator(
-        preprocessing_function=preprocess_input,
-        rotation_range=20,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        horizontal_flip=True,
-        zoom_range=0.15,
-        brightness_range=[0.8, 1.2],
-    )
-    gen_validacion = ImageDataGenerator(
-        preprocessing_function=preprocess_input
-    )
+    transformacion_entrenamiento = construir_transformaciones()
 
-    flujo_entrenamiento = gen_entrenamiento.flow_from_directory(
-        directorio_dataset / "train",
-        target_size=TAMANO_ENTRADA,
-        batch_size=BATCH_SIZE,
-        class_mode="categorical",
-        classes=CLASES,
+    class GeneradorAugmentado(tf.keras.utils.Sequence):
+        def __init__(self, directorio, transformacion, shuffle):
+            self.transformacion = transformacion
+            self.shuffle = shuffle
+            self.rutas: list[str] = []
+            self.etiquetas: list[int] = []
+
+            for idx, clase in enumerate(CLASES):
+                carpeta = Path(directorio) / clase
+                for ruta in sorted(carpeta.iterdir()):
+                    if ruta.suffix.lower() in EXTENSIONES:
+                        self.rutas.append(str(ruta))
+                        self.etiquetas.append(idx)
+
+            if self.shuffle:
+                self._mezclar()
+
+        def _mezclar(self):
+            indices = list(range(len(self.rutas)))
+            random.shuffle(indices)
+            self.rutas = [self.rutas[i] for i in indices]
+            self.etiquetas = [self.etiquetas[i] for i in indices]
+
+        def __len__(self):
+            return len(self.rutas) // BATCH_SIZE
+
+        def __getitem__(self, idx):
+            inicio = idx * BATCH_SIZE
+            fin = inicio + BATCH_SIZE
+            X, y = [], []
+
+            for ruta, etiqueta in zip(
+                self.rutas[inicio:fin], self.etiquetas[inicio:fin]
+            ):
+                img = Image.open(ruta).convert("RGB").resize(
+                    TAMANO_ENTRADA, Image.LANCZOS
+                )
+                img_np = np.array(img, dtype=np.uint8)
+
+                if self.transformacion:
+                    img_np = self.transformacion(image=img_np)["image"]
+
+                img_float = preprocess_input(img_np.astype(np.float32))
+                X.append(img_float)
+
+                label = np.zeros(len(CLASES), dtype=np.float32)
+                label[etiqueta] = 1.0
+                y.append(label)
+
+            return np.array(X), np.array(y)
+
+        def on_epoch_end(self):
+            if self.shuffle:
+                self._mezclar()
+
+    flujo_entrenamiento = GeneradorAugmentado(
+        directorio=directorio_dataset / "train",
+        transformacion=transformacion_entrenamiento,
         shuffle=True,
     )
-    flujo_validacion = gen_validacion.flow_from_directory(
-        directorio_dataset / "val",
-        target_size=TAMANO_ENTRADA,
-        batch_size=BATCH_SIZE,
-        class_mode="categorical",
-        classes=CLASES,
+    flujo_validacion = GeneradorAugmentado(
+        directorio=directorio_dataset / "val",
+        transformacion=None,
         shuffle=False,
     )
     return flujo_entrenamiento, flujo_validacion
@@ -90,13 +172,17 @@ def entrenar(directorio_dataset: Path) -> None:
 
     flujo_entrenamiento, flujo_validacion = crear_generadores(directorio_dataset)
     modelo, base = construir_modelo(num_clases=len(CLASES))
-    modelo.summary()
+
+    print(f"Imágenes entrenamiento: {len(flujo_entrenamiento) * BATCH_SIZE}")
+    print(f"Imágenes validación:    {len(flujo_validacion) * BATCH_SIZE}\n")
 
     # ── Fase 1: base congelada — solo entrena el head ─────────────────────────
     print("\n─── Fase 1: entrenando head (base congelada) ───\n")
     modelo.compile(
         optimizer=tf.keras.optimizers.Adam(LR_FASE1),
-        loss="categorical_crossentropy",
+        loss=tf.keras.losses.CategoricalCrossentropy(
+            label_smoothing=LABEL_SMOOTHING
+        ),
         metrics=["accuracy"],
     )
     modelo.fit(
@@ -105,13 +191,31 @@ def entrenar(directorio_dataset: Path) -> None:
         epochs=EPOCHS_FASE1,
         callbacks=[
             tf.keras.callbacks.EarlyStopping(
-                monitor="val_loss", patience=3, restore_best_weights=True
+                monitor="val_accuracy",
+                patience=8,
+                restore_best_weights=True,
+                min_delta=0.005,
+            ),
+            tf.keras.callbacks.ModelCheckpoint(
+                str(RUTA_MODELO_SALIDA).replace(".keras", "_fase1.keras"),
+                monitor="val_accuracy",
+                save_best_only=True,
+                verbose=1,
             ),
             tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="val_loss", factor=0.5, patience=2, verbose=1
+                monitor="val_loss", factor=0.5, patience=4, verbose=1, min_lr=1e-6
             ),
         ],
     )
+
+    print("\n─── Evaluación tras Fase 1 ───")
+    perdida_f1, precision_f1 = modelo.evaluate(flujo_validacion, verbose=0)
+    print(f"Loss: {perdida_f1:.4f} | Accuracy: {precision_f1:.4f}")
+
+    if precision_f1 < 0.40:
+        print(
+            "\n[AVISO] Accuracy < 40 % tras Fase 1 — el head no convergió."
+        )
 
     # ── Fase 2: fine-tuning de las últimas capas ──────────────────────────────
     print(f"\n─── Fase 2: fine-tuning últimas {CAPAS_FINE_TUNING} capas ───\n")
@@ -121,7 +225,9 @@ def entrenar(directorio_dataset: Path) -> None:
 
     modelo.compile(
         optimizer=tf.keras.optimizers.Adam(LR_FASE2),
-        loss="categorical_crossentropy",
+        loss=tf.keras.losses.CategoricalCrossentropy(
+            label_smoothing=LABEL_SMOOTHING
+        ),
         metrics=["accuracy"],
     )
     modelo.fit(
@@ -130,7 +236,10 @@ def entrenar(directorio_dataset: Path) -> None:
         epochs=EPOCHS_FASE2,
         callbacks=[
             tf.keras.callbacks.EarlyStopping(
-                monitor="val_loss", patience=5, restore_best_weights=True
+                monitor="val_accuracy",
+                patience=12,
+                restore_best_weights=True,
+                min_delta=0.003,
             ),
             tf.keras.callbacks.ModelCheckpoint(
                 str(RUTA_MODELO_SALIDA),
@@ -139,7 +248,7 @@ def entrenar(directorio_dataset: Path) -> None:
                 verbose=1,
             ),
             tf.keras.callbacks.ReduceLROnPlateau(
-                monitor="val_loss", factor=0.3, patience=3, verbose=1
+                monitor="val_loss", factor=0.3, patience=5, verbose=1, min_lr=1e-7
             ),
         ],
     )
@@ -148,12 +257,20 @@ def entrenar(directorio_dataset: Path) -> None:
     print("\n─── Evaluación final en conjunto de validación ───\n")
     perdida, precision = modelo.evaluate(flujo_validacion, verbose=1)
     print(f"\nLoss: {perdida:.4f} | Accuracy: {precision:.4f}")
+
+    if precision >= 0.99:
+        print(
+            "\n[AVISO] Accuracy >= 99% — el modelo posiblemente sobreajustó al "
+            "estilo visual del dataset. Probá con imágenes de distintas fuentes "
+            "antes de usar en producción."
+        )
+
     print(f"\nModelo guardado en: {RUTA_MODELO_SALIDA.resolve()}")
 
 
 if __name__ == "__main__":
     analizador = argparse.ArgumentParser(
-        description="Entrenar clasificador timpánico con EfficientNetB3"
+        description="Entrenar clasificador timpánico con EfficientNetB0 + albumentations"
     )
     analizador.add_argument(
         "--directorio_dataset",

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.audiometria import router as audiometria_router
 from app.api.auth import router as auth_router
 from app.api.citas import router as citas_router
 from app.api.imagenes_timpanicas import router as imagenes_timpanicas_router
@@ -31,6 +32,7 @@ app.include_router(pacientes_router, prefix="/api/v1")
 app.include_router(citas_router, prefix="/api/v1")
 app.include_router(registros_clinicos_router, prefix="/api/v1")
 app.include_router(imagenes_timpanicas_router, prefix="/api/v1")
+app.include_router(audiometria_router, prefix="/api/v1")
 
 
 # ─── Health check ─────────────────────────────────────────────────────────────

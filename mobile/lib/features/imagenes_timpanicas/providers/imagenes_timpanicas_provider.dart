@@ -87,6 +87,22 @@ class ImagenesTimpanicasNotifier
     }
   }
 
+  Future<bool> eliminar(String idImagen) async {
+    try {
+      await _repositorio.eliminar(idImagen);
+      state = state.copyWith(
+        imagenes: state.imagenes.where((i) => i.id != idImagen).toList(),
+      );
+      return true;
+    } on DioException catch (e) {
+      state = state.copyWith(error: _parsearError(e));
+      return false;
+    } catch (_) {
+      state = state.copyWith(error: 'Error al eliminar imagen timpánica');
+      return false;
+    }
+  }
+
   String _parsearError(DioException e) {
     final datos = e.response?.data;
     if (datos is Map && datos.containsKey('detail')) {
