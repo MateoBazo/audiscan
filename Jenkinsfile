@@ -34,6 +34,19 @@ pipeline {
 
                     echo "Flutter encontrado: $FLUTTER"
                     "$FLUTTER" --version
+                    "$FLUTTER" pub get --directory=${MOBILE_DIR}
+                '''
+            }
+        }
+
+        // ── Stage 2: Tests de modelos Auth ────────────────────────────────────
+        stage('Test - Modelos Auth') {
+            steps {
+                echo '─── Ejecutando tests de modelos Auth ───'
+                sh '''
+                    FLUTTER=/opt/homebrew/bin/flutter
+                    cd ${MOBILE_DIR}
+                    "$FLUTTER" test test/features/auth/auth_models_test.dart -v
                 '''
             }
         }
