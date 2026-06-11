@@ -41,7 +41,7 @@ def get_current_user(
     admin_client = get_supabase_admin()
     db_response = (
         admin_client.table("users")
-        .select("id, email, full_name, role, license_number")
+        .select("id, email, full_name, role, license_number, medico_id")
         .eq("id", user_id)
         .maybe_single()
         .execute()
@@ -55,3 +55,21 @@ def get_current_user(
         )
 
     return UserProfile(**db_response.data)
+
+
+def solo_doctor(
+    usuario_actual: UserProfile = Depends(get_current_user),
+) -> UserProfile:
+    if usuario_actual.role != "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acceso restringido al médico",
+        )
+    return usuario_actual
+
+
+def resolver_id_doctor(usuario: UserProfile) -> str:
+    """Devuelve el ID del médico efectivo: el propio si es doctor, o el médico vinculado si es asistente."""
+    if usuario.role == "assistant" and usuario.medico_id:
+        return usuario.medico_id
+    return usuario.id

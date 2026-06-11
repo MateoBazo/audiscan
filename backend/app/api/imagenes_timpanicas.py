@@ -6,12 +6,16 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from fastapi.responses import Response
 
 from ai.tympanic_classifier import clasificador_timpanico
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, solo_doctor
 from app.core.supabase_client import get_supabase_admin
 from app.schemas.auth import UserProfile
 from app.schemas.imagenes_timpanicas import AnalisisIAResponse, ImagenTimpanicaResponse
 
-router = APIRouter(prefix="/imagenes-timpanicas", tags=["Imágenes Timpánicas"])
+router = APIRouter(
+    prefix="/imagenes-timpanicas",
+    tags=["Imágenes Timpánicas"],
+    dependencies=[Depends(solo_doctor)],
+)
 
 BUCKET = "tympanic-images"
 EXTENSIONES_PERMITIDAS = {"image/jpeg", "image/png", "image/webp"}

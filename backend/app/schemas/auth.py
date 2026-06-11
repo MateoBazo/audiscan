@@ -9,7 +9,8 @@ class RegisterRequest(BaseModel):
     password: str
     full_name: str
     role: Literal["doctor", "assistant"]
-    license_number: Optional[str] = None  # Requerido para doctor, opcional para asistente
+    license_number: Optional[str] = None
+    medico_email: Optional[str] = None  # Solo para asistente: email del médico al que pertenece
 
 
 class LoginRequest(BaseModel):
@@ -23,8 +24,9 @@ class UserProfile(BaseModel):
     id: str
     email: str
     full_name: str
-    role: Literal["doctor", "assistant"]
+    role: Literal["doctor", "assistant", "paciente"]
     license_number: Optional[str] = None
+    medico_id: Optional[str] = None
 
 
 class AuthResponse(BaseModel):

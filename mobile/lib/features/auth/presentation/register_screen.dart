@@ -17,6 +17,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordCtrl = TextEditingController();
   final _fullNameCtrl = TextEditingController();
   final _licenseCtrl = TextEditingController();
+  final _medicoEmailCtrl = TextEditingController();
   String _selectedRole = 'doctor';
   bool _obscurePassword = true;
 
@@ -26,6 +27,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _passwordCtrl.dispose();
     _fullNameCtrl.dispose();
     _licenseCtrl.dispose();
+    _medicoEmailCtrl.dispose();
     super.dispose();
   }
 
@@ -39,6 +41,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           licenseNumber: _licenseCtrl.text.trim().isEmpty
               ? null
               : _licenseCtrl.text.trim(),
+          medicoEmail: _selectedRole == 'assistant' && _medicoEmailCtrl.text.trim().isNotEmpty
+              ? _medicoEmailCtrl.text.trim()
+              : null,
         );
     if (success && mounted) {
       context.go('/home');
@@ -150,6 +155,29 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onChanged: (v) => setState(() => _selectedRole = v!),
                 ),
                 const SizedBox(height: 16),
+
+                // Email del médico (solo visible para asistente)
+                if (_selectedRole == 'assistant') ...[
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _medicoEmailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _submit(),
+                    decoration: const InputDecoration(
+                      labelText: 'Email del médico a cargo',
+                      prefixIcon: Icon(Icons.medical_services_outlined),
+                      border: OutlineInputBorder(),
+                      hintText: 'Email del doctor con quien trabajás',
+                    ),
+                    validator: (v) {
+                      if (_selectedRole != 'assistant') return null;
+                      if (v == null || v.trim().isEmpty) return 'Requerido para asistente';
+                      if (!v.contains('@')) return 'Email inválido';
+                      return null;
+                    },
+                  ),
+                ],
 
                 // Número de licencia (solo visible para doctor)
                 if (_selectedRole == 'doctor')

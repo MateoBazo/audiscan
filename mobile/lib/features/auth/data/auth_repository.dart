@@ -25,6 +25,7 @@ class AuthRepository {
     required String fullName,
     required String role,
     String? licenseNumber,
+    String? medicoEmail,
   }) async {
     final response = await _dio.post(
       '/auth/register',
@@ -35,6 +36,8 @@ class AuthRepository {
         'role': role,
         if (licenseNumber != null && licenseNumber.isNotEmpty)
           'license_number': licenseNumber,
+        if (medicoEmail != null && medicoEmail.isNotEmpty)
+          'medico_email': medicoEmail,
       },
     );
     return AuthResponse.fromJson(response.data as Map<String, dynamic>);

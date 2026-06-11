@@ -20,11 +20,15 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, solo_doctor
 from app.core.supabase_client import get_supabase_admin
 from app.schemas.auth import UserProfile
 
-router = APIRouter(prefix="/reportes", tags=["Reportes"])
+router = APIRouter(
+    prefix="/reportes",
+    tags=["Reportes"],
+    dependencies=[Depends(solo_doctor)],
+)
 
 # ─── Paleta ───────────────────────────────────────────────────────────────────
 

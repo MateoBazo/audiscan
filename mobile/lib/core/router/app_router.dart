@@ -23,6 +23,7 @@ import '../../features/audiometria/presentation/resultado_audiometria_pantalla.d
 import '../../features/imagenes_timpanicas/models/imagen_timpanica_modelo.dart';
 import '../../features/imagenes_timpanicas/presentation/capturar_imagen_timpanica_pantalla.dart';
 import '../../features/imagenes_timpanicas/presentation/resultado_imagen_timpanica_pantalla.dart';
+import '../../features/paciente_portal/presentation/historial_paciente_pantalla.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -140,6 +141,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             paciente: datos['paciente'] as PacienteModelo,
           );
         },
+      ),
+      GoRoute(
+        path: '/mi-portal/historial',
+        builder: (_, __) => const HistorialPacientePantalla(),
+      ),
+      GoRoute(
+        path: '/mi-portal/imagenes',
+        builder: (_, __) => const ImagenesPacientePantalla(),
+      ),
+      GoRoute(
+        path: '/mi-portal/audiometrias',
+        builder: (_, __) => const AudiometriasPacientePantalla(),
       ),
       GoRoute(
         path: '/citas',

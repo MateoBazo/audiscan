@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, resolver_id_doctor
 from app.core.supabase_client import get_supabase_admin
 from app.schemas.auth import UserProfile
 from app.schemas.citas import (
@@ -28,13 +28,13 @@ def crear_cita(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> CitaResponse:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
-    # Verificar que el paciente pertenece al médico
     paciente = (
         admin.table("pacientes")
         .select("id")
         .eq("id", cuerpo.id_paciente)
-        .eq("medico_id", usuario_actual.id)
+        .eq("medico_id", id_doctor)
         .maybe_single()
         .execute()
     )
@@ -45,7 +45,7 @@ def crear_cita(
         )
 
     datos = {
-        "id_doctor": usuario_actual.id,
+        "id_doctor": id_doctor,
         "id_paciente": cuerpo.id_paciente,
         "fecha_hora": cuerpo.fecha_hora.isoformat(),
         "duracion_minutos": cuerpo.duracion_minutos,
@@ -76,11 +76,12 @@ def listar_citas(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> List[CitaResponse]:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
     consulta = (
         admin.table("citas")
         .select("*")
-        .eq("id_doctor", usuario_actual.id)
+        .eq("id_doctor", id_doctor)
     )
 
     if estado:
@@ -112,12 +113,13 @@ def obtener_cita(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> CitaResponse:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
     respuesta = (
         admin.table("citas")
         .select("*")
         .eq("id", cita_id)
-        .eq("id_doctor", usuario_actual.id)
+        .eq("id_doctor", id_doctor)
         .maybe_single()
         .execute()
     )
@@ -142,12 +144,13 @@ def actualizar_cita(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> CitaResponse:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
     existente = (
         admin.table("citas")
         .select("id")
         .eq("id", cita_id)
-        .eq("id_doctor", usuario_actual.id)
+        .eq("id_doctor", id_doctor)
         .maybe_single()
         .execute()
     )
@@ -175,7 +178,7 @@ def actualizar_cita(
             admin.table("pacientes")
             .select("id")
             .eq("id", datos_actualizados["id_paciente"])
-            .eq("medico_id", usuario_actual.id)
+            .eq("medico_id", id_doctor)
             .maybe_single()
             .execute()
         )
@@ -212,6 +215,7 @@ def cambiar_estado_cita(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> CitaResponse:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
     if cuerpo.estado not in ESTADOS_VALIDOS:
         raise HTTPException(
@@ -223,7 +227,7 @@ def cambiar_estado_cita(
         admin.table("citas")
         .select("id")
         .eq("id", cita_id)
-        .eq("id_doctor", usuario_actual.id)
+        .eq("id_doctor", id_doctor)
         .maybe_single()
         .execute()
     )
@@ -260,12 +264,13 @@ def eliminar_cita(
     usuario_actual: UserProfile = Depends(get_current_user),
 ):
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
     existente = (
         admin.table("citas")
         .select("id")
         .eq("id", cita_id)
-        .eq("id_doctor", usuario_actual.id)
+        .eq("id_doctor", id_doctor)
         .maybe_single()
         .execute()
     )

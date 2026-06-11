@@ -2,11 +2,12 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, resolver_id_doctor, solo_doctor
 from app.core.supabase_client import get_supabase_admin
 from app.schemas.auth import UserProfile
 from app.schemas.pacientes import (
     ActualizarPacienteRequest,
+    CrearCuentaPacienteRequest,
     CrearPacienteRequest,
     PacienteResponse,
 )
@@ -25,9 +26,10 @@ def crear_paciente(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> PacienteResponse:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
     datos = {
-        "medico_id": usuario_actual.id,
+        "medico_id": id_doctor,
         "nombre_completo": cuerpo.nombre_completo,
         "fecha_nacimiento": (
             cuerpo.fecha_nacimiento.isoformat() if cuerpo.fecha_nacimiento else None
@@ -55,11 +57,12 @@ def listar_pacientes(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> List[PacienteResponse]:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
     respuesta = (
         admin.table("pacientes")
         .select("*")
-        .eq("medico_id", usuario_actual.id)
+        .eq("medico_id", id_doctor)
         .order("creado_en", desc=True)
         .execute()
     )
@@ -77,12 +80,13 @@ def obtener_paciente(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> PacienteResponse:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
     respuesta = (
         admin.table("pacientes")
         .select("*")
         .eq("id", paciente_id)
-        .eq("medico_id", usuario_actual.id)
+        .eq("medico_id", id_doctor)
         .maybe_single()
         .execute()
     )
@@ -107,13 +111,13 @@ def actualizar_paciente(
     usuario_actual: UserProfile = Depends(get_current_user),
 ) -> PacienteResponse:
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
-    # Verificar que el paciente existe y pertenece al médico autenticado
     existente = (
         admin.table("pacientes")
         .select("id")
         .eq("id", paciente_id)
-        .eq("medico_id", usuario_actual.id)
+        .eq("medico_id", id_doctor)
         .maybe_single()
         .execute()
     )
@@ -153,6 +157,90 @@ def actualizar_paciente(
     return PacienteResponse(**respuesta.data[0])
 
 
+@router.post(
+    "/{paciente_id}/crear-cuenta",
+    status_code=status.HTTP_201_CREATED,
+    summary="Crear cuenta de acceso para un paciente (solo médico)",
+)
+def crear_cuenta_paciente(
+    paciente_id: str,
+    cuerpo: CrearCuentaPacienteRequest,
+    usuario_actual: UserProfile = Depends(solo_doctor),
+):
+    admin = get_supabase_admin()
+
+    # Verificar que el paciente pertenece al médico
+    resp_paciente = (
+        admin.table("pacientes")
+        .select("id, nombre_completo, usuario_id")
+        .eq("id", paciente_id)
+        .eq("medico_id", usuario_actual.id)
+        .maybe_single()
+        .execute()
+    )
+    if resp_paciente is None or resp_paciente.data is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Paciente no encontrado",
+        )
+
+    paciente = resp_paciente.data
+
+    if paciente.get("usuario_id"):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Este paciente ya tiene una cuenta de acceso",
+        )
+
+    # Crear usuario en Supabase Auth
+    try:
+        auth_resp = admin.auth.admin.create_user({
+            "email": cuerpo.email,
+            "password": cuerpo.contrasena_temporal,
+            "email_confirm": True,
+        })
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No se pudo crear la cuenta: {str(e)}",
+        )
+
+    nuevo_usuario_id = auth_resp.user.id
+
+    # Insertar perfil en la tabla users con rol paciente
+    try:
+        admin.table("users").insert({
+            "id": nuevo_usuario_id,
+            "email": cuerpo.email,
+            "full_name": paciente["nombre_completo"],
+            "role": "paciente",
+        }).execute()
+    except Exception as e:
+        # Rollback: eliminar el usuario de Auth
+        try:
+            admin.auth.admin.delete_user(nuevo_usuario_id)
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al guardar perfil: {str(e)}",
+        )
+
+    # Vincular usuario al paciente
+    try:
+        admin.table("pacientes").update({"usuario_id": nuevo_usuario_id}).eq("id", paciente_id).execute()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al vincular cuenta con el paciente: {str(e)}",
+        )
+
+    return {
+        "mensaje": f"Cuenta creada correctamente para {paciente['nombre_completo']}. El paciente puede iniciar sesión con el email y contraseña proporcionados.",
+        "email": cuerpo.email,
+    }
+
+
 @router.delete(
     "/{paciente_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -163,13 +251,13 @@ def eliminar_paciente(
     usuario_actual: UserProfile = Depends(get_current_user),
 ):
     admin = get_supabase_admin()
+    id_doctor = resolver_id_doctor(usuario_actual)
 
-    # Verificar que el paciente existe y pertenece al médico autenticado
     existente = (
         admin.table("pacientes")
         .select("id")
         .eq("id", paciente_id)
-        .eq("medico_id", usuario_actual.id)
+        .eq("medico_id", id_doctor)
         .maybe_single()
         .execute()
     )

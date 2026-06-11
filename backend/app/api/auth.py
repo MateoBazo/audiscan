@@ -44,7 +44,38 @@ def register(body: RegisterRequest) -> AuthResponse:
     auth_user = auth_response.user
     access_token = auth_response.session.access_token if auth_response.session else None
 
-    # 2. Insertar perfil en la tabla `users`
+    # 2. Si es asistente, buscar el médico por email para vincular
+    medico_id = None
+    if body.role == "assistant":
+        if not body.medico_email:
+            try:
+                admin_client.auth.admin.delete_user(auth_user.id)
+            except Exception:
+                pass
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Se requiere el email del médico para registrar una asistente.",
+            )
+        medico_resp = (
+            admin_client.table("users")
+            .select("id")
+            .eq("email", body.medico_email)
+            .eq("role", "doctor")
+            .maybe_single()
+            .execute()
+        )
+        if medico_resp is None or medico_resp.data is None:
+            try:
+                admin_client.auth.admin.delete_user(auth_user.id)
+            except Exception:
+                pass
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No se encontró ningún médico con ese email.",
+            )
+        medico_id = medico_resp.data["id"]
+
+    # 3. Insertar perfil en la tabla `users`
     try:
         db_response = (
             admin_client.table("users")
@@ -55,6 +86,7 @@ def register(body: RegisterRequest) -> AuthResponse:
                     "full_name": body.full_name,
                     "role": body.role,
                     "license_number": body.license_number,
+                    "medico_id": medico_id,
                 }
             )
             .execute()
@@ -82,6 +114,8 @@ def register(body: RegisterRequest) -> AuthResponse:
         access_token=access_token,
         user=UserProfile(**user_data),
     )
+
+
 
 
 @router.post(
@@ -119,7 +153,7 @@ def login(body: LoginRequest) -> AuthResponse:
     user_id = auth_response.user.id
     db_response = (
         admin_client.table("users")
-        .select("id, email, full_name, role, license_number")
+        .select("id, email, full_name, role, license_number, medico_id")
         .eq("id", user_id)
         .maybe_single()
         .execute()

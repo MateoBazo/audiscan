@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../models/registro_clinico_modelo.dart';
 import '../providers/registros_clinicos_provider.dart';
 import '../../pacientes/models/paciente_modelo.dart';
+import '../../../core/api/api_client.dart';
 import '../../../core/utils/color_paciente.dart';
 import '../../../core/widgets/vista_cargando.dart';
 import '../../../core/widgets/vista_vacia.dart';
@@ -38,6 +39,12 @@ class HistorialClinicoPantalla extends ConsumerWidget {
           ],
         ),
         actions: [
+          if (!paciente.tieneCuenta)
+            IconButton(
+              icon: const Icon(Icons.person_add_outlined),
+              tooltip: 'Crear cuenta de paciente',
+              onPressed: () => _mostrarDialogoCrearCuenta(context, ref, paciente),
+            ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             tooltip: 'Editar paciente',
@@ -379,4 +386,128 @@ class _CampoResumen extends StatelessWidget {
       ],
     );
   }
+}
+
+// ─── Dialog crear cuenta de paciente ─────────────────────────────────────────
+
+Future<void> _mostrarDialogoCrearCuenta(
+  BuildContext context,
+  WidgetRef ref,
+  PacienteModelo paciente,
+) async {
+  final emailCtrl = TextEditingController(
+    text: paciente.emailContacto ?? '',
+  );
+  final passCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  bool guardando = false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          return AlertDialog(
+            title: const Text('Crear cuenta de paciente'),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'El paciente podrá ver su historial clínico con estas credenciales.',
+                    style: Theme.of(dialogContext).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: emailCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Email del paciente',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Requerido';
+                      if (!v.contains('@')) return 'Email inválido';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: passCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Contraseña temporal',
+                      prefixIcon: Icon(Icons.lock_outline),
+                    ),
+                    obscureText: true,
+                    validator: (v) {
+                      if (v == null || v.length < 6) {
+                        return 'Mínimo 6 caracteres';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: guardando ? null : () => Navigator.pop(dialogContext),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: guardando
+                    ? null
+                    : () async {
+                        if (!formKey.currentState!.validate()) return;
+                        setDialogState(() => guardando = true);
+                        try {
+                          final dio = ref.read(dioProvider);
+                          await dio.post(
+                            '/pacientes/${paciente.id}/crear-cuenta',
+                            data: {
+                              'email': emailCtrl.text.trim(),
+                              'contrasena_temporal': passCtrl.text,
+                            },
+                          );
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext);
+                          }
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Cuenta creada correctamente'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        } catch (_) {
+                          setDialogState(() => guardando = false);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Error al crear la cuenta. Verificá que el email no esté en uso.'),
+                                backgroundColor: Theme.of(context).colorScheme.error,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                child: guardando
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Crear cuenta'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
 }

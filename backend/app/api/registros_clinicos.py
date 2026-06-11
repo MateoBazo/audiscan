@@ -2,7 +2,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, solo_doctor
 from app.core.supabase_client import get_supabase_admin
 from app.schemas.auth import UserProfile
 from app.schemas.registros_clinicos import (
@@ -11,7 +11,11 @@ from app.schemas.registros_clinicos import (
     RegistroClinicoResponse,
 )
 
-router = APIRouter(prefix="/registros-clinicos", tags=["Registros Clínicos"])
+router = APIRouter(
+    prefix="/registros-clinicos",
+    tags=["Registros Clínicos"],
+    dependencies=[Depends(solo_doctor)],
+)
 
 
 @router.post(

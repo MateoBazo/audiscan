@@ -4,6 +4,7 @@ class PacienteModelo {
   final String nombreCompleto;
   final DateTime? fechaNacimiento;
   final Map<String, dynamic>? informacionContacto;
+  final String? usuarioId;
   final DateTime? creadoEn;
 
   const PacienteModelo({
@@ -12,8 +13,11 @@ class PacienteModelo {
     required this.nombreCompleto,
     this.fechaNacimiento,
     this.informacionContacto,
+    this.usuarioId,
     this.creadoEn,
   });
+
+  bool get tieneCuenta => usuarioId != null;
 
   factory PacienteModelo.fromJson(Map<String, dynamic> json) {
     return PacienteModelo(
@@ -26,6 +30,7 @@ class PacienteModelo {
       informacionContacto: json['informacion_contacto'] != null
           ? Map<String, dynamic>.from(json['informacion_contacto'] as Map)
           : null,
+      usuarioId: json['usuario_id'] as String?,
       creadoEn: json['creado_en'] != null
           ? DateTime.parse(json['creado_en'] as String)
           : null,

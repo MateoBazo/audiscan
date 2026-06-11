@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ai.audiogram_classifier import clasificador_audiograma
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, solo_doctor
 from app.core.supabase_client import get_supabase_admin
 from app.schemas.auth import UserProfile
 from app.schemas.audiometria import (
@@ -12,7 +12,11 @@ from app.schemas.audiometria import (
     SesionAudiometriaResponse,
 )
 
-router = APIRouter(prefix="/audiometria", tags=["Audiometría"])
+router = APIRouter(
+    prefix="/audiometria",
+    tags=["Audiometría"],
+    dependencies=[Depends(solo_doctor)],
+)
 
 VERSION_MODELO = "audiometry_v1"
 

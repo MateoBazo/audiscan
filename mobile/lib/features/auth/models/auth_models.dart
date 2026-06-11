@@ -4,6 +4,7 @@ class UserModel {
   final String fullName;
   final String role;
   final String? licenseNumber;
+  final String? medicoId;
 
   const UserModel({
     required this.id,
@@ -11,6 +12,7 @@ class UserModel {
     required this.fullName,
     required this.role,
     this.licenseNumber,
+    this.medicoId,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -20,11 +22,13 @@ class UserModel {
       fullName: json['full_name'] as String,
       role: json['role'] as String,
       licenseNumber: json['license_number'] as String?,
+      medicoId: json['medico_id'] as String?,
     );
   }
 
   bool get isDoctor => role == 'doctor';
   bool get isAssistant => role == 'assistant';
+  bool get isPaciente => role == 'paciente';
 }
 
 class AuthResponse {

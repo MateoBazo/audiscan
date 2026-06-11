@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 # ─── Request schemas ──────────────────────────────────────────────────────────
@@ -18,6 +18,11 @@ class ActualizarPacienteRequest(BaseModel):
     informacion_contacto: Optional[dict] = None
 
 
+class CrearCuentaPacienteRequest(BaseModel):
+    email: EmailStr
+    contrasena_temporal: str
+
+
 # ─── Response schema ──────────────────────────────────────────────────────────
 
 class PacienteResponse(BaseModel):
@@ -26,4 +31,5 @@ class PacienteResponse(BaseModel):
     nombre_completo: str
     fecha_nacimiento: Optional[date] = None
     informacion_contacto: Optional[dict] = None
+    usuario_id: Optional[str] = None
     creado_en: Optional[datetime] = None

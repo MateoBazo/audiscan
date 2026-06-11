@@ -5,19 +5,13 @@ import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
 import '../../citas/models/cita_modelo.dart';
 import '../../citas/providers/citas_provider.dart';
-import '../../paciente_portal/presentation/home_paciente_pantalla.dart';
-import 'home_secretaria_pantalla.dart';
 
-class HomePlaceholder extends ConsumerWidget {
-  const HomePlaceholder({super.key});
+class HomeSecretariaPantalla extends ConsumerWidget {
+  const HomeSecretariaPantalla({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final usuario = ref.watch(authProvider).user;
-
-    if (usuario?.isAssistant == true) return const HomeSecretariaPantalla();
-    if (usuario?.isPaciente == true) return const HomePacientePantalla();
-
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -39,29 +33,24 @@ class HomePlaceholder extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Saludo
             Text(
-              '¡Bienvenido, ${usuario?.fullName ?? 'Usuario'}!',
+              '¡Bienvenida, ${usuario?.fullName ?? 'Secretaria'}!',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              usuario?.role == 'doctor'
-                  ? 'Médico otorrinolaringólogo'
-                  : 'Asistente',
+              'Asistente / Secretaria',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 32),
 
-            // Citas de hoy
-            const _SeccionCitasHoy(),
+            const _SeccionCitasHoySecretaria(),
             const SizedBox(height: 32),
 
-            // Módulos
             Text(
               'Módulos',
               style: theme.textTheme.titleMedium?.copyWith(
@@ -71,7 +60,7 @@ class HomePlaceholder extends ConsumerWidget {
             const SizedBox(height: 12),
             _TarjetaModulo(
               icono: Icons.people_outline,
-              titulo: 'Mis Pacientes',
+              titulo: 'Pacientes',
               descripcion: 'Registrar y gestionar pacientes',
               onTap: () => context.go('/pacientes'),
             ),
@@ -97,10 +86,8 @@ class HomePlaceholder extends ConsumerWidget {
   }
 }
 
-//Sección citas de hoy
-
-class _SeccionCitasHoy extends ConsumerWidget {
-  const _SeccionCitasHoy();
+class _SeccionCitasHoySecretaria extends ConsumerWidget {
+  const _SeccionCitasHoySecretaria();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -142,19 +129,16 @@ class _SeccionCitasHoy extends ConsumerWidget {
             if (citasHoy.isNotEmpty)
               TextButton(
                 onPressed: () => context.go('/citas'),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                ),
+                style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
                 child: const Text('Ver agenda'),
               ),
           ],
         ),
         const SizedBox(height: 8),
-
         if (estadoCitas.cargando)
-          _CargandoCitasVista()
+          _CargandoVista()
         else if (citasHoy.isEmpty)
-          _SinCitasHoyVista()
+          _SinCitasVista()
         else ...[
           ...citasMostradas.map((c) => _TarjetaCitaHoy(cita: c)),
           if (hayMas)
@@ -175,7 +159,6 @@ class _SeccionCitasHoy extends ConsumerWidget {
 
 class _TarjetaCitaHoy extends StatelessWidget {
   final CitaModelo cita;
-
   const _TarjetaCitaHoy({required this.cita});
 
   @override
@@ -243,7 +226,7 @@ class _TarjetaCitaHoy extends StatelessWidget {
   }
 }
 
-class _SinCitasHoyVista extends StatelessWidget {
+class _SinCitasVista extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -265,7 +248,7 @@ class _SinCitasHoyVista extends StatelessWidget {
   }
 }
 
-class _CargandoCitasVista extends StatelessWidget {
+class _CargandoVista extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -290,7 +273,38 @@ class _CargandoCitasVista extends StatelessWidget {
   }
 }
 
-// Tarjetas de módulo 
+class _TarjetaModulo extends StatelessWidget {
+  final IconData icono;
+  final String titulo;
+  final String descripcion;
+  final VoidCallback onTap;
+
+  const _TarjetaModulo({
+    required this.icono,
+    required this.titulo,
+    required this.descripcion,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        leading: CircleAvatar(
+          backgroundColor: theme.colorScheme.primaryContainer,
+          child: Icon(icono, color: theme.colorScheme.onPrimaryContainer),
+        ),
+        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(descripcion),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+}
 
 class _TarjetaModuloBadge extends StatelessWidget {
   final IconData icono;
@@ -310,12 +324,10 @@ class _TarjetaModuloBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         leading: Badge(
           isLabelVisible: badge > 0,
           label: Text('$badge'),
@@ -324,44 +336,7 @@ class _TarjetaModuloBadge extends StatelessWidget {
             child: Icon(icono, color: theme.colorScheme.onPrimaryContainer),
           ),
         ),
-        title: Text(titulo,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(descripcion),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-class _TarjetaModulo extends StatelessWidget {
-  final IconData icono;
-  final String titulo;
-  final String descripcion;
-  final VoidCallback onTap;
-
-  const _TarjetaModulo({
-    required this.icono,
-    required this.titulo,
-    required this.descripcion,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        leading: CircleAvatar(
-          backgroundColor: theme.colorScheme.primaryContainer,
-          child: Icon(icono, color: theme.colorScheme.onPrimaryContainer),
-        ),
-        title: Text(titulo,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(descripcion),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,

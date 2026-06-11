@@ -91,6 +91,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String fullName,
     required String role,
     String? licenseNumber,
+    String? medicoEmail,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -100,6 +101,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         fullName: fullName,
         role: role,
         licenseNumber: licenseNumber,
+        medicoEmail: medicoEmail,
       );
       await _storage.write(key: kTokenKey, value: response.accessToken);
       state = state.copyWith(user: response.user, isLoading: false);
