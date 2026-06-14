@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/login_screen.dart';
@@ -24,12 +23,12 @@ import '../../features/imagenes_timpanicas/models/imagen_timpanica_modelo.dart';
 import '../../features/imagenes_timpanicas/presentation/capturar_imagen_timpanica_pantalla.dart';
 import '../../features/imagenes_timpanicas/presentation/resultado_imagen_timpanica_pantalla.dart';
 import '../../features/paciente_portal/presentation/historial_paciente_pantalla.dart';
+import '../widgets/shell_responsivo.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/splash',
     redirect: (context, state) {
-      // Solo protege rutas — la navegación inicial la maneja SplashScreen
       final authState = ref.read(authProvider);
 
       if (authState.isRestoring) return '/splash';
@@ -40,7 +39,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == '/login' ||
           state.matchedLocation == '/register';
 
-      // Evitar redirección de splash (lo maneja SplashScreen)
       if (isOnSplash) return null;
 
       if (!isAuthenticated && !isAuthRoute) return '/login';
@@ -51,128 +49,136 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
-      GoRoute(path: '/home', builder: (_, __) => const HomePlaceholder()),
-      GoRoute(
-        path: '/pacientes',
-        builder: (_, __) => const PacientesPantalla(),
+      ShellRoute(
+        builder: (context, state, child) => ShellResponsivo(
+          rutaActual: state.matchedLocation,
+          child: child,
+        ),
         routes: [
+          GoRoute(path: '/home', builder: (_, __) => const HomePlaceholder()),
           GoRoute(
-            path: 'nuevo',
-            builder: (_, __) => const RegistrarPacientePantalla(),
+            path: '/pacientes',
+            builder: (_, __) => const PacientesPantalla(),
+            routes: [
+              GoRoute(
+                path: 'nuevo',
+                builder: (_, __) => const RegistrarPacientePantalla(),
+              ),
+              GoRoute(
+                path: 'editar',
+                builder: (context, state) => RegistrarPacientePantalla(
+                  paciente: state.extra as PacienteModelo?,
+                ),
+              ),
+              GoRoute(
+                path: 'historial',
+                builder: (context, state) => HistorialClinicoPantalla(
+                  paciente: state.extra as PacienteModelo,
+                ),
+              ),
+            ],
           ),
           GoRoute(
-            path: 'editar',
-            builder: (context, state) => RegistrarPacientePantalla(
-              paciente: state.extra as PacienteModelo?,
-            ),
-          ),
-          GoRoute(
-            path: 'historial',
-            builder: (context, state) => HistorialClinicoPantalla(
+            path: '/registros-clinicos/nuevo',
+            builder: (context, state) => RegistrarRegistroClinicoPantalla(
               paciente: state.extra as PacienteModelo,
             ),
           ),
-        ],
-      ),
-      GoRoute(
-        path: '/registros-clinicos/nuevo',
-        builder: (context, state) => RegistrarRegistroClinicoPantalla(
-          paciente: state.extra as PacienteModelo,
-        ),
-      ),
-      GoRoute(
-        path: '/registros-clinicos/detalle',
-        builder: (context, state) {
-          final datos = state.extra as Map<String, dynamic>;
-          return DetalleRegistroClinicoPantalla(
-            registro: datos['registro'] as RegistroClinicoModelo,
-            paciente: datos['paciente'] as PacienteModelo,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/registros-clinicos/editar',
-        builder: (context, state) {
-          final datos = state.extra as Map<String, dynamic>;
-          return RegistrarRegistroClinicoPantalla(
-            paciente: datos['paciente'] as PacienteModelo,
-            registro: datos['registro'] as RegistroClinicoModelo,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/audiometria/registrar',
-        builder: (context, state) {
-          final datos = state.extra as Map<String, dynamic>;
-          return RegistrarAudiometriaPantalla(
-            registro: datos['registro'] as RegistroClinicoModelo,
-            paciente: datos['paciente'] as PacienteModelo,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/audiometria/resultado',
-        builder: (context, state) {
-          final datos = state.extra as Map<String, dynamic>;
-          return ResultadoAudiometriaPantalla(
-            sesion: datos['sesion'] as SesionAudiometriaModelo,
-            registro: datos['registro'] as RegistroClinicoModelo,
-            paciente: datos['paciente'] as PacienteModelo,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/imagenes-timpanicas/capturar',
-        builder: (context, state) {
-          final datos = state.extra as Map<String, dynamic>;
-          return CapturarImagenTimpanicaPantalla(
-            registro: datos['registro'] as RegistroClinicoModelo,
-            paciente: datos['paciente'] as PacienteModelo,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/imagenes-timpanicas/resultado',
-        builder: (context, state) {
-          final datos = state.extra as Map<String, dynamic>;
-          return ResultadoImagenTimpanicaPantalla(
-            imagen: datos['imagen'] as ImagenTimpanicaModelo,
-            registro: datos['registro'] as RegistroClinicoModelo,
-            paciente: datos['paciente'] as PacienteModelo,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/mi-portal/historial',
-        builder: (_, __) => const HistorialPacientePantalla(),
-      ),
-      GoRoute(
-        path: '/mi-portal/imagenes',
-        builder: (_, __) => const ImagenesPacientePantalla(),
-      ),
-      GoRoute(
-        path: '/mi-portal/audiometrias',
-        builder: (_, __) => const AudiometriasPacientePantalla(),
-      ),
-      GoRoute(
-        path: '/citas',
-        builder: (_, __) => const CitasPantalla(),
-        routes: [
           GoRoute(
-            path: 'nueva',
-            builder: (_, __) => const RegistrarCitaPantalla(),
+            path: '/registros-clinicos/detalle',
+            builder: (context, state) {
+              final datos = state.extra as Map<String, dynamic>;
+              return DetalleRegistroClinicoPantalla(
+                registro: datos['registro'] as RegistroClinicoModelo,
+                paciente: datos['paciente'] as PacienteModelo,
+              );
+            },
           ),
           GoRoute(
-            path: 'detalle',
-            builder: (context, state) => DetalleCitaPantalla(
-              cita: state.extra as CitaModelo,
-            ),
+            path: '/registros-clinicos/editar',
+            builder: (context, state) {
+              final datos = state.extra as Map<String, dynamic>;
+              return RegistrarRegistroClinicoPantalla(
+                paciente: datos['paciente'] as PacienteModelo,
+                registro: datos['registro'] as RegistroClinicoModelo,
+              );
+            },
           ),
           GoRoute(
-            path: 'editar',
-            builder: (context, state) => RegistrarCitaPantalla(
-              cita: state.extra as CitaModelo?,
-            ),
+            path: '/audiometria/registrar',
+            builder: (context, state) {
+              final datos = state.extra as Map<String, dynamic>;
+              return RegistrarAudiometriaPantalla(
+                registro: datos['registro'] as RegistroClinicoModelo,
+                paciente: datos['paciente'] as PacienteModelo,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/audiometria/resultado',
+            builder: (context, state) {
+              final datos = state.extra as Map<String, dynamic>;
+              return ResultadoAudiometriaPantalla(
+                sesion: datos['sesion'] as SesionAudiometriaModelo,
+                registro: datos['registro'] as RegistroClinicoModelo,
+                paciente: datos['paciente'] as PacienteModelo,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/imagenes-timpanicas/capturar',
+            builder: (context, state) {
+              final datos = state.extra as Map<String, dynamic>;
+              return CapturarImagenTimpanicaPantalla(
+                registro: datos['registro'] as RegistroClinicoModelo,
+                paciente: datos['paciente'] as PacienteModelo,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/imagenes-timpanicas/resultado',
+            builder: (context, state) {
+              final datos = state.extra as Map<String, dynamic>;
+              return ResultadoImagenTimpanicaPantalla(
+                imagen: datos['imagen'] as ImagenTimpanicaModelo,
+                registro: datos['registro'] as RegistroClinicoModelo,
+                paciente: datos['paciente'] as PacienteModelo,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/mi-portal/historial',
+            builder: (_, __) => const HistorialPacientePantalla(),
+          ),
+          GoRoute(
+            path: '/mi-portal/imagenes',
+            builder: (_, __) => const ImagenesPacientePantalla(),
+          ),
+          GoRoute(
+            path: '/mi-portal/audiometrias',
+            builder: (_, __) => const AudiometriasPacientePantalla(),
+          ),
+          GoRoute(
+            path: '/citas',
+            builder: (_, __) => const CitasPantalla(),
+            routes: [
+              GoRoute(
+                path: 'nueva',
+                builder: (_, __) => const RegistrarCitaPantalla(),
+              ),
+              GoRoute(
+                path: 'detalle',
+                builder: (context, state) => DetalleCitaPantalla(
+                  cita: state.extra as CitaModelo,
+                ),
+              ),
+              GoRoute(
+                path: 'editar',
+                builder: (context, state) => RegistrarCitaPantalla(
+                  cita: state.extra as CitaModelo?,
+                ),
+              ),
+            ],
           ),
         ],
       ),

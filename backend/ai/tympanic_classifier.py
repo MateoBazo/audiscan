@@ -1,8 +1,12 @@
 """
-Clasificador de imágenes timpánicas — EfficientNetB3 + Grad-CAM.
+Clasificador de imágenes timpánicas — EfficientNetB0 + Grad-CAM + TTA.
 
 Clases soportadas:
     normal, otitis_cronica, otitis_aguda, cerumen
+
+Test-Time Augmentation (TTA): promedia predicciones sobre varias versiones
+augmentadas de la imagen para reducir el efecto del domain gap entre el
+dataset de entrenamiento (Kaggle) y fotos reales de otoscopio.
 
 Si el archivo del modelo no existe, opera en modo mock y devuelve
 una respuesta simulada con una advertencia en los logs.
@@ -19,6 +23,10 @@ CLASES = ["normal", "otitis_cronica", "otitis_aguda", "cerumen"]
 RUTA_MODELO = Path(__file__).parent / "models" / "tympanic_v1.keras"
 TAMANO_ENTRADA = (224, 224)
 CAPA_GRAD_CAM = "top_conv"
+
+# Número de versiones augmentadas a promediar en TTA (incluye el original).
+# Más versiones = más robustez pero más lento. 8 es un buen balance.
+VERSIONES_TTA = 8
 
 
 class ClasificadorTimpanico:
@@ -73,7 +81,10 @@ class ClasificadorTimpanico:
 
     def predecir(self, imagen_bytes: bytes) -> dict:
         """
-        Clasifica una imagen timpánica.
+        Clasifica una imagen timpánica usando TTA (Test-Time Augmentation).
+
+        Promedia predicciones sobre varias versiones augmentadas de la imagen
+        para reducir el efecto del domain gap con fotos reales de otoscopio.
 
         Retorna:
             {
@@ -88,16 +99,20 @@ class ClasificadorTimpanico:
 
         import numpy as np
 
-        entrada = self._preprocesar(imagen_bytes)
-        probabilidades_raw = self._modelo.predict(entrada, verbose=0)[0]
-        idx_prediccion = int(np.argmax(probabilidades_raw))
+        versiones = self._generar_versiones_tta(imagen_bytes)
+        entrada = np.stack(versiones, axis=0)  # (VERSIONES_TTA, 224, 224, 3)
+
+        probabilidades_por_version = self._modelo.predict(entrada, verbose=0)
+        probabilidades_promedio = probabilidades_por_version.mean(axis=0)
+
+        idx_prediccion = int(np.argmax(probabilidades_promedio))
 
         return {
             "prediccion": CLASES[idx_prediccion],
-            "confianza": float(probabilidades_raw[idx_prediccion]),
+            "confianza": float(probabilidades_promedio[idx_prediccion]),
             "probabilidades": {
                 clase: float(prob)
-                for clase, prob in zip(CLASES, probabilidades_raw)
+                for clase, prob in zip(CLASES, probabilidades_promedio)
             },
             "modo_mock": False,
         }
@@ -110,8 +125,8 @@ class ClasificadorTimpanico:
         """
         Genera un overlay Grad-CAM sobre la imagen original.
 
-        Retorna los bytes PNG del overlay. Si está en modo mock,
-        devuelve la imagen original sin modificar.
+        Usa la imagen sin augmentar para que el mapa de calor corresponda
+        exactamente a la imagen mostrada al usuario.
         """
         if self._modo_mock:
             return imagen_bytes
@@ -121,6 +136,7 @@ class ClasificadorTimpanico:
         import tensorflow as tf
         from PIL import Image
 
+        # Grad-CAM siempre sobre la imagen original sin augmentar
         entrada = self._preprocesar(imagen_bytes)
 
         with tf.GradientTape() as cinta:
@@ -153,7 +169,59 @@ class ClasificadorTimpanico:
         Image.fromarray(superposicion).save(buffer, format="PNG")
         return buffer.getvalue()
 
-    # ─── Internos ─────────────────────────────────────────────────────────────
+    # ─── TTA interno ─────────────────────────────────────────────────────────
+
+    def _generar_versiones_tta(self, imagen_bytes: bytes) -> list:
+        """
+        Genera VERSIONES_TTA versiones augmentadas de la imagen.
+
+        Augmentaciones aplicadas:
+          - Original sin cambios
+          - Flip horizontal
+          - Rotaciones leves (-15°, +15°)
+          - Variaciones de brillo/contraste
+          - Combinaciones de flip + rotación
+        """
+        import numpy as np
+        from PIL import Image, ImageEnhance, ImageOps
+
+        imagen_pil = Image.open(io.BytesIO(imagen_bytes)).convert("RGB")
+        imagen_pil = imagen_pil.resize(TAMANO_ENTRADA, Image.LANCZOS)
+
+        def _a_arreglo(img: Image.Image) -> np.ndarray:
+            from tensorflow.keras.applications.efficientnet import preprocess_input
+            return preprocess_input(np.array(img, dtype=np.float32))
+
+        versiones = []
+
+        # 1. Original
+        versiones.append(_a_arreglo(imagen_pil))
+
+        # 2. Flip horizontal
+        versiones.append(_a_arreglo(ImageOps.mirror(imagen_pil)))
+
+        # 3. Rotación +15°
+        versiones.append(_a_arreglo(imagen_pil.rotate(15, resample=Image.BILINEAR)))
+
+        # 4. Rotación -15°
+        versiones.append(_a_arreglo(imagen_pil.rotate(-15, resample=Image.BILINEAR)))
+
+        # 5. Brillo aumentado (simula otoscopio con más luz)
+        versiones.append(_a_arreglo(ImageEnhance.Brightness(imagen_pil).enhance(1.3)))
+
+        # 6. Brillo reducido (simula otoscopio con menos luz)
+        versiones.append(_a_arreglo(ImageEnhance.Brightness(imagen_pil).enhance(0.7)))
+
+        # 7. Contraste aumentado
+        versiones.append(_a_arreglo(ImageEnhance.Contrast(imagen_pil).enhance(1.3)))
+
+        # 8. Flip horizontal + rotación +10°
+        flipped = ImageOps.mirror(imagen_pil)
+        versiones.append(_a_arreglo(flipped.rotate(10, resample=Image.BILINEAR)))
+
+        return versiones[:VERSIONES_TTA]
+
+    # ─── Preprocesamiento ─────────────────────────────────────────────────────
 
     def _preprocesar(self, imagen_bytes: bytes):
         import numpy as np

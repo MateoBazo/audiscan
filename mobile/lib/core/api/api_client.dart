@@ -8,7 +8,9 @@ const String kBaseUrl = 'http://localhost:8000/api/v1';
 const String kTokenKey = 'access_token';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>(
-  (_) => const FlutterSecureStorage(),
+  (_) => const FlutterSecureStorage(
+    mOptions: MacOsOptions(useDataProtectionKeyChain: false),
+  ),
 );
 
 final dioProvider = Provider<Dio>((ref) {
