@@ -16,15 +16,29 @@ class HistorialPacientePantalla extends ConsumerWidget {
     final estado = ref.watch(pacientePortalProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi historial clínico')),
+      appBar: AppBar(
+        title: const Text('Mi historial clínico'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_outlined),
+            tooltip: 'Actualizar',
+            onPressed: () => ref.read(pacientePortalProvider.notifier).cargar(),
+          ),
+        ],
+      ),
       body: estado.cargando
           ? const Center(child: CircularProgressIndicator())
           : estado.registros.isEmpty
               ? const _VacioVista(mensaje: 'No tenés registros clínicos aún.')
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: estado.registros.length,
-                  itemBuilder: (_, i) => _TarjetaRegistro(registro: estado.registros[i]),
+              : RefreshIndicator(
+                  onRefresh: () =>
+                      ref.read(pacientePortalProvider.notifier).cargar(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: estado.registros.length,
+                    itemBuilder: (_, i) =>
+                        _TarjetaRegistro(registro: estado.registros[i]),
+                  ),
                 ),
     );
   }
@@ -155,15 +169,29 @@ class ImagenesPacientePantalla extends ConsumerWidget {
     final estado = ref.watch(pacientePortalProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis imágenes timpánicas')),
+      appBar: AppBar(
+        title: const Text('Mis imágenes timpánicas'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_outlined),
+            tooltip: 'Actualizar',
+            onPressed: () => ref.read(pacientePortalProvider.notifier).cargar(),
+          ),
+        ],
+      ),
       body: estado.cargando
           ? const Center(child: CircularProgressIndicator())
           : estado.imagenes.isEmpty
               ? const _VacioVista(mensaje: 'No tenés imágenes registradas aún.')
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: estado.imagenes.length,
-                  itemBuilder: (_, i) => _TarjetaImagen(imagen: estado.imagenes[i]),
+              : RefreshIndicator(
+                  onRefresh: () =>
+                      ref.read(pacientePortalProvider.notifier).cargar(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: estado.imagenes.length,
+                    itemBuilder: (_, i) =>
+                        _TarjetaImagen(imagen: estado.imagenes[i]),
+                  ),
                 ),
     );
   }
@@ -175,11 +203,16 @@ class _TarjetaImagen extends StatelessWidget {
 
   Color _colorPrediccion(String pred) {
     switch (pred) {
-      case 'normal': return Colors.green.shade600;
-      case 'otitis_aguda': return Colors.red.shade600;
-      case 'otitis_cronica': return Colors.orange.shade700;
-      case 'cerumen': return Colors.amber.shade700;
-      default: return Colors.grey;
+      case 'normal':
+        return Colors.green.shade600;
+      case 'otitis_aguda':
+        return Colors.red.shade600;
+      case 'otitis_cronica':
+        return Colors.orange.shade700;
+      case 'cerumen':
+        return Colors.amber.shade700;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -219,7 +252,8 @@ class _TarjetaImagen extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(20),
@@ -234,9 +268,11 @@ class _TarjetaImagen extends StatelessWidget {
                       if (analisis != null) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: _colorPrediccion(analisis.prediccion).withValues(alpha: 0.12),
+                            color: _colorPrediccion(analisis.prediccion)
+                                .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -288,16 +324,30 @@ class AudiometriasPacientePantalla extends ConsumerWidget {
     final estado = ref.watch(pacientePortalProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mis audiometrías')),
+      appBar: AppBar(
+        title: const Text('Mis audiometrías'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_outlined),
+            tooltip: 'Actualizar',
+            onPressed: () => ref.read(pacientePortalProvider.notifier).cargar(),
+          ),
+        ],
+      ),
       body: estado.cargando
           ? const Center(child: CircularProgressIndicator())
           : estado.audiometrias.isEmpty
-              ? const _VacioVista(mensaje: 'No tenés audiometrías registradas aún.')
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: estado.audiometrias.length,
-                  itemBuilder: (_, i) =>
-                      _TarjetaAudiometria(sesion: estado.audiometrias[i]),
+              ? const _VacioVista(
+                  mensaje: 'No tenés audiometrías registradas aún.')
+              : RefreshIndicator(
+                  onRefresh: () =>
+                      ref.read(pacientePortalProvider.notifier).cargar(),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: estado.audiometrias.length,
+                    itemBuilder: (_, i) =>
+                        _TarjetaAudiometria(sesion: estado.audiometrias[i]),
+                  ),
                 ),
     );
   }
@@ -309,11 +359,16 @@ class _TarjetaAudiometria extends StatelessWidget {
 
   Color _colorTipo(String tipo) {
     switch (tipo) {
-      case 'normal': return Colors.green.shade600;
-      case 'conductiva': return Colors.orange.shade700;
-      case 'sensorioneural': return Colors.blue.shade700;
-      case 'mixta': return Colors.purple.shade600;
-      default: return Colors.grey;
+      case 'normal':
+        return Colors.green.shade600;
+      case 'conductiva':
+        return Colors.orange.shade700;
+      case 'sensorioneural':
+        return Colors.blue.shade700;
+      case 'mixta':
+        return Colors.purple.shade600;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -333,7 +388,8 @@ class _TarjetaAudiometria extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.hearing_outlined, size: 16, color: theme.colorScheme.primary),
+                Icon(Icons.hearing_outlined,
+                    size: 16, color: theme.colorScheme.primary),
                 const SizedBox(width: 6),
                 Text(
                   sesion.realizadoEn != null
@@ -427,7 +483,8 @@ class _ChipResultado extends StatelessWidget {
           ),
           Text(
             tipo,
-            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                fontSize: 12, color: color, fontWeight: FontWeight.w600),
           ),
           Text(
             grado,

@@ -41,11 +41,20 @@ class DetalleRegistroClinicoPantalla extends ConsumerWidget {
 
     final estadoImagenes =
         ref.watch(imagenesTimpanicasProvider(registroActual.id));
-    final estadoAudiometria =
-        ref.watch(audiometriaProvider(registroActual.id));
+    final estadoAudiometria = ref.watch(audiometriaProvider(registroActual.id));
 
     final theme = Theme.of(context);
     final formatoFecha = DateFormat("EEEE d 'de' MMMM 'de' yyyy", 'es');
+
+    Future<void> refrescar() async {
+      await Future.wait([
+        ref.read(registrosClinicosProvider(paciente.id).notifier).cargar(),
+        ref
+            .read(imagenesTimpanicasProvider(registroActual.id).notifier)
+            .cargar(),
+        ref.read(audiometriaProvider(registroActual.id).notifier).cargar(),
+      ]);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -56,6 +65,11 @@ class DetalleRegistroClinicoPantalla extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh_outlined),
+            tooltip: 'Actualizar',
+            onPressed: refrescar,
+          ),
+          IconButton(
             icon: const Icon(Icons.edit_outlined),
             tooltip: 'Editar',
             onPressed: () => context.push(
@@ -65,172 +79,175 @@ class DetalleRegistroClinicoPantalla extends ConsumerWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Encabezado ────────────────────────────────────────────────
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: colorDePaciente(paciente.nombreCompleto),
-                  child: Text(
-                    paciente.iniciales,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+      body: RefreshIndicator(
+        onRefresh: refrescar,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Encabezado ────────────────────────────────────────────────
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: colorDePaciente(paciente.nombreCompleto),
+                    child: Text(
+                      paciente.iniciales,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          paciente.nombreCompleto,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          formatoFecha.format(registroActual.fecha),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // ── Campos clínicos ───────────────────────────────────────────
+              if (registroActual.anamnesis != null)
+                _TarjetaCampo(
+                  icono: Icons.notes_outlined,
+                  titulo: 'Anamnesis / Motivo de consulta',
+                  contenido: registroActual.anamnesis!,
+                ),
+              if (registroActual.exploracionFisica != null)
+                _TarjetaCampo(
+                  icono: Icons.search_outlined,
+                  titulo: 'Exploración física',
+                  contenido: registroActual.exploracionFisica!,
+                ),
+              if (registroActual.diagnostico != null)
+                _TarjetaCampo(
+                  icono: Icons.medical_information_outlined,
+                  titulo: 'Diagnóstico',
+                  contenido: registroActual.diagnostico!,
+                  destacado: true,
+                ),
+              if (registroActual.tratamiento != null)
+                _TarjetaCampo(
+                  icono: Icons.medication_outlined,
+                  titulo: 'Tratamiento / Indicaciones',
+                  contenido: registroActual.tratamiento!,
+                ),
+              if (registroActual.observaciones != null)
+                _TarjetaCampo(
+                  icono: Icons.comment_outlined,
+                  titulo: 'Observaciones',
+                  contenido: registroActual.observaciones!,
+                ),
+              if (_todosVacios(registroActual))
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      'Este registro no tiene contenido aún.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        paciente.nombreCompleto,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        formatoFecha.format(registroActual.fecha),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
 
-            // ── Campos clínicos ───────────────────────────────────────────
-            if (registroActual.anamnesis != null)
-              _TarjetaCampo(
-                icono: Icons.notes_outlined,
-                titulo: 'Anamnesis / Motivo de consulta',
-                contenido: registroActual.anamnesis!,
+              const SizedBox(height: 28),
+
+              // ── Sección: Imágenes timpánicas ──────────────────────────────
+              const EncabezadoSeccion(titulo: 'Imágenes timpánicas'),
+              const SizedBox(height: 12),
+              _SeccionImagenes(
+                estado: estadoImagenes,
+                registro: registroActual,
+                paciente: paciente,
               ),
-            if (registroActual.exploracionFisica != null)
-              _TarjetaCampo(
-                icono: Icons.search_outlined,
-                titulo: 'Exploración física',
-                contenido: registroActual.exploracionFisica!,
-              ),
-            if (registroActual.diagnostico != null)
-              _TarjetaCampo(
-                icono: Icons.medical_information_outlined,
-                titulo: 'Diagnóstico',
-                contenido: registroActual.diagnostico!,
-                destacado: true,
-              ),
-            if (registroActual.tratamiento != null)
-              _TarjetaCampo(
-                icono: Icons.medication_outlined,
-                titulo: 'Tratamiento / Indicaciones',
-                contenido: registroActual.tratamiento!,
-              ),
-            if (registroActual.observaciones != null)
-              _TarjetaCampo(
-                icono: Icons.comment_outlined,
-                titulo: 'Observaciones',
-                contenido: registroActual.observaciones!,
-              ),
-            if (_todosVacios(registroActual))
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'Este registro no tiene contenido aún.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => context.push(
+                  '/imagenes-timpanicas/capturar',
+                  extra: {'registro': registroActual, 'paciente': paciente},
+                ),
+                icon: const Icon(Icons.add_a_photo_outlined),
+                label: const Text('Nueva imagen + IA'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
 
-            const SizedBox(height: 28),
+              const SizedBox(height: 28),
 
-            // ── Sección: Imágenes timpánicas ──────────────────────────────
-            const EncabezadoSeccion(titulo: 'Imágenes timpánicas'),
-            const SizedBox(height: 12),
-            _SeccionImagenes(
-              estado: estadoImagenes,
-              registro: registroActual,
-              paciente: paciente,
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => context.push(
-                '/imagenes-timpanicas/capturar',
-                extra: {'registro': registroActual, 'paciente': paciente},
+              // ── Sección: Audiometrías ─────────────────────────────────────
+              const EncabezadoSeccion(titulo: 'Audiometrías'),
+              const SizedBox(height: 12),
+              _SeccionAudiometrias(
+                estado: estadoAudiometria,
+                registro: registroActual,
+                paciente: paciente,
               ),
-              icon: const Icon(Icons.add_a_photo_outlined),
-              label: const Text('Nueva imagen + IA'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: () => context.push(
+                  '/audiometria/registrar',
+                  extra: {'registro': registroActual, 'paciente': paciente},
+                ),
+                icon: const Icon(Icons.hearing_outlined),
+                label: const Text('Nueva audiometría + IA'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 28),
+              const SizedBox(height: 28),
 
-            // ── Sección: Audiometrías ─────────────────────────────────────
-            const EncabezadoSeccion(titulo: 'Audiometrías'),
-            const SizedBox(height: 12),
-            _SeccionAudiometrias(
-              estado: estadoAudiometria,
-              registro: registroActual,
-              paciente: paciente,
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => context.push(
-                '/audiometria/registrar',
-                extra: {'registro': registroActual, 'paciente': paciente},
-              ),
-              icon: const Icon(Icons.hearing_outlined),
-              label: const Text('Nueva audiometría + IA'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+              // ── Botón PDF ─────────────────────────────────────────────────
+              _BotonGenerarPdf(registro: registroActual, paciente: paciente),
+
+              const SizedBox(height: 10),
+
+              // ── Botón editar ──────────────────────────────────────────────
+              FilledButton.icon(
+                onPressed: () => context.push(
+                  '/registros-clinicos/editar',
+                  extra: {'registro': registroActual, 'paciente': paciente},
+                ),
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Editar registro'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 28),
-
-            // ── Botón PDF ─────────────────────────────────────────────────
-            _BotonGenerarPdf(registro: registroActual, paciente: paciente),
-
-            const SizedBox(height: 10),
-
-            // ── Botón editar ──────────────────────────────────────────────
-            FilledButton.icon(
-              onPressed: () => context.push(
-                '/registros-clinicos/editar',
-                extra: {'registro': registroActual, 'paciente': paciente},
-              ),
-              icon: const Icon(Icons.edit_outlined),
-              label: const Text('Editar registro'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -282,13 +299,11 @@ class _SeccionImagenes extends ConsumerWidget {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(exito
-                      ? 'Imagen eliminada'
-                      : 'Error al eliminar imagen'),
+                  content: Text(
+                      exito ? 'Imagen eliminada' : 'Error al eliminar imagen'),
                   behavior: SnackBarBehavior.floating,
-                  backgroundColor: exito
-                      ? null
-                      : Theme.of(context).colorScheme.error,
+                  backgroundColor:
+                      exito ? null : Theme.of(context).colorScheme.error,
                 ),
               );
             }
@@ -412,8 +427,7 @@ class _TarjetaImagen extends StatelessWidget {
                             child: Text(
                               analisis.etiqueta,
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color:
-                                    _colorPrediccion(analisis.prediccion),
+                                color: _colorPrediccion(analisis.prediccion),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -496,9 +510,8 @@ class _SeccionAudiometrias extends ConsumerWidget {
                       ? 'Audiometría eliminada'
                       : 'Error al eliminar audiometría'),
                   behavior: SnackBarBehavior.floating,
-                  backgroundColor: exito
-                      ? null
-                      : Theme.of(context).colorScheme.error,
+                  backgroundColor:
+                      exito ? null : Theme.of(context).colorScheme.error,
                 ),
               );
             }
@@ -735,7 +748,8 @@ class _BotonGenerarPdfState extends ConsumerState<_BotonGenerarPdf> {
       );
 
       final directorio = await getTemporaryDirectory();
-      final ruta = '${directorio.path}/reporte_${widget.registro.id.substring(0, 8)}.pdf';
+      final ruta =
+          '${directorio.path}/reporte_${widget.registro.id.substring(0, 8)}.pdf';
       final archivo = File(ruta);
       await archivo.writeAsBytes(respuesta.data as List<int>);
 

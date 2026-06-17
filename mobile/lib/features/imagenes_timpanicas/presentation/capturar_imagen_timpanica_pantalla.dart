@@ -30,9 +30,9 @@ class _CapturarImagenTimpanicaPantallaState
   String _oido = 'derecho';
   final _picker = ImagePicker();
 
-  Future<void> _seleccionarImagen(ImageSource fuente) async {
+  Future<void> _seleccionarImagen() async {
     final imagen = await _picker.pickImage(
-      source: fuente,
+      source: ImageSource.gallery,
       imageQuality: 90,
       maxWidth: 1024,
       maxHeight: 1024,
@@ -155,7 +155,7 @@ class _CapturarImagenTimpanicaPantallaState
 // Widget: selector de imagen
 
 class _SelectorImagen extends StatelessWidget {
-  final void Function(ImageSource) onSeleccionar;
+  final VoidCallback onSeleccionar;
 
   const _SelectorImagen({required this.onSeleccionar});
 
@@ -188,21 +188,10 @@ class _SelectorImagen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () => onSeleccionar(ImageSource.camera),
-                icon: const Icon(Icons.camera_alt_outlined),
-                label: const Text('Cámara'),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton.icon(
-                onPressed: () => onSeleccionar(ImageSource.gallery),
-                icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Galería'),
-              ),
-            ],
+          OutlinedButton.icon(
+            onPressed: onSeleccionar,
+            icon: const Icon(Icons.photo_library_outlined),
+            label: const Text('Galería'),
           ),
         ],
       ),

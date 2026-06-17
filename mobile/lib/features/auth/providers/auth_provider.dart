@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../data/auth_repository.dart';
@@ -47,6 +48,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._repository, this._storage) : super(const AuthState()) {
     _restoreSession();
   }
+
+  @visibleForTesting
+  AuthNotifier.paraTest(AuthState estadoInicial)
+      : _repository = AuthRepository(Dio()),
+        _storage = const FlutterSecureStorage(),
+        super(estadoInicial);
 
   // Restaura la sesión al arrancar la app
   Future<void> _restoreSession() async {

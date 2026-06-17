@@ -18,6 +18,11 @@ class HomePacientePantalla extends ConsumerWidget {
         title: const Text('AudiScan'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh_outlined),
+            tooltip: 'Actualizar',
+            onPressed: () => ref.read(pacientePortalProvider.notifier).cargar(),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesión',
             onPressed: () async {
@@ -32,95 +37,101 @@ class HomePacientePantalla extends ConsumerWidget {
           : estado.error != null
               ? _VistaError(
                   mensaje: estado.error!,
-                  onReintentar: () => ref.read(pacientePortalProvider.notifier).cargar(),
+                  onReintentar: () =>
+                      ref.read(pacientePortalProvider.notifier).cargar(),
                 )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '¡Hola, ${usuario?.fullName ?? 'Paciente'}!',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+              : RefreshIndicator(
+                  onRefresh: () =>
+                      ref.read(pacientePortalProvider.notifier).cargar(),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '¡Hola, ${usuario?.fullName ?? 'Paciente'}!',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Este es tu historial clínico personal',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 4),
+                        Text(
+                          'Este es tu historial clínico personal',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-                      // Resumen
-                      _TarjetaResumen(
-                        registros: estado.registros.length,
-                        imagenes: estado.imagenes.length,
-                        audiometrias: estado.audiometrias.length,
-                      ),
-                      const SizedBox(height: 24),
-
-                      Text(
-                        'Mi información',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                        // Resumen
+                        _TarjetaResumen(
+                          registros: estado.registros.length,
+                          imagenes: estado.imagenes.length,
+                          audiometrias: estado.audiometrias.length,
                         ),
-                      ),
-                      const SizedBox(height: 12),
+                        const SizedBox(height: 24),
 
-                      _TarjetaNavegacion(
-                        icono: Icons.folder_open_outlined,
-                        titulo: 'Historial clínico',
-                        descripcion:
-                            '${estado.registros.length} registro${estado.registros.length != 1 ? 's' : ''}',
-                        onTap: () => context.push('/mi-portal/historial'),
-                      ),
-                      const SizedBox(height: 8),
-                      _TarjetaNavegacion(
-                        icono: Icons.image_outlined,
-                        titulo: 'Imágenes timpánicas',
-                        descripcion:
-                            '${estado.imagenes.length} imagen${estado.imagenes.length != 1 ? 'es' : ''}',
-                        onTap: () => context.push('/mi-portal/imagenes'),
-                      ),
-                      const SizedBox(height: 8),
-                      _TarjetaNavegacion(
-                        icono: Icons.hearing_outlined,
-                        titulo: 'Audiometrías',
-                        descripcion:
-                            '${estado.audiometrias.length} sesión${estado.audiometrias.length != 1 ? 'es' : ''}',
-                        onTap: () => context.push('/mi-portal/audiometrias'),
-                      ),
-
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(12),
+                        Text(
+                          'Mi información',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 18,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Esta información es solo de referencia. Consultá siempre con tu médico tratante.',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 12),
+
+                        _TarjetaNavegacion(
+                          icono: Icons.folder_open_outlined,
+                          titulo: 'Historial clínico',
+                          descripcion:
+                              '${estado.registros.length} registro${estado.registros.length != 1 ? 's' : ''}',
+                          onTap: () => context.push('/mi-portal/historial'),
+                        ),
+                        const SizedBox(height: 8),
+                        _TarjetaNavegacion(
+                          icono: Icons.image_outlined,
+                          titulo: 'Imágenes timpánicas',
+                          descripcion:
+                              '${estado.imagenes.length} imagen${estado.imagenes.length != 1 ? 'es' : ''}',
+                          onTap: () => context.push('/mi-portal/imagenes'),
+                        ),
+                        const SizedBox(height: 8),
+                        _TarjetaNavegacion(
+                          icono: Icons.hearing_outlined,
+                          titulo: 'Audiometrías',
+                          descripcion:
+                              '${estado.audiometrias.length} sesión${estado.audiometrias.length != 1 ? 'es' : ''}',
+                          onTap: () => context.push('/mi-portal/audiometrias'),
+                        ),
+
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 18,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Esta información es solo de referencia. Consultá siempre con tu médico tratante.',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
     );
@@ -224,7 +235,8 @@ class _TarjetaNavegacion extends StatelessWidget {
           backgroundColor: theme.colorScheme.primaryContainer,
           child: Icon(icono, color: theme.colorScheme.onPrimaryContainer),
         ),
-        title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title:
+            Text(titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(descripcion),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
@@ -246,11 +258,13 @@ class _VistaError extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
             Text(mensaje, textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onReintentar, child: const Text('Reintentar')),
+            FilledButton(
+                onPressed: onReintentar, child: const Text('Reintentar')),
           ],
         ),
       ),
