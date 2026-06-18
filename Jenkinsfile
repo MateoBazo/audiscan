@@ -24,7 +24,8 @@ pipeline {
                 sh '''
                     cd backend
                     python3 -m venv venv
-                    venv/bin/pip install -r requirements.txt --quiet
+                    venv/bin/pip install --upgrade pip --quiet
+                    venv/bin/pip install -r requirements-test.txt --quiet
                 '''
             }
         }
