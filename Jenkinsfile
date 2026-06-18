@@ -35,12 +35,23 @@ pipeline {
                 echo 'Ejecutando tests unitarios del backend'
                 sh '''
                     cd backend
-                    venv/bin/python -m pytest tests/ -v --tb=short --junit-xml=pytest-report.xml
+                    venv/bin/python -m pytest tests/ -v --tb=short \
+                        --junit-xml=pytest-report.xml \
+                        --html=reporte-backend.html \
+                        --self-contained-html
                 '''
             }
             post {
                 always {
                     junit allowEmptyResults: true, testResults: 'backend/pytest-report.xml'
+                    publishHTML(target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'backend',
+                        reportFiles: 'reporte-backend.html',
+                        reportName: 'Reporte Backend'
+                    ])
                 }
             }
         }
@@ -66,7 +77,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'backend/pytest-report.xml, mobile/flutter-report.xml', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'backend/pytest-report.xml, mobile/flutter-report.xml, backend/reporte-backend.html', allowEmptyArchive: true
         }
         success {
             echo 'Pipeline completado correctamente.'
