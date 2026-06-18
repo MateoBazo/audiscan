@@ -65,6 +65,9 @@ pipeline {
     }
 
     post {
+        always {
+            archiveArtifacts artifacts: 'backend/pytest-report.xml, mobile/flutter-report.xml', allowEmptyArchive: true
+        }
         success {
             echo 'Pipeline completado correctamente.'
         }
