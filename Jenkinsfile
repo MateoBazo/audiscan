@@ -10,19 +10,53 @@ pipeline {
 
         stage('Setup Flutter') {
             steps {
-                echo '─── Verificando entorno Flutter ───'
+                echo 'Verificando entorno Flutter'
                 sh '"$FLUTTER" --version'
                 sh '"$FLUTTER" pub get --directory=$MOBILE_DIR'
+                sh 'dart pub global activate junitreport'
             }
         }
 
-        stage('Test - Login Screen') {
+        stage('Setup Backend') {
             steps {
-                echo '─── Ejecutando tests del Login ───'
+                echo 'Configurando entorno Python'
                 sh '''
-                    cd $MOBILE_DIR
-                    "$FLUTTER" test test/features/auth/login_screen_test.dart -v
+                    cd backend
+                    python3 -m venv venv
+                    venv/bin/pip install -r requirements.txt --quiet
                 '''
+            }
+        }
+
+        stage('Test - Backend (pytest)') {
+            steps {
+                echo 'Ejecutando tests unitarios del backend'
+                sh '''
+                    cd backend
+                    venv/bin/python -m pytest tests/ -v --tb=short --junit-xml=pytest-report.xml
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'backend/pytest-report.xml'
+                }
+            }
+        }
+
+        stage('Test - Frontend (Flutter)') {
+            steps {
+                echo 'Ejecutando tests del Login'
+                sh '''
+                    export PATH="$HOME/.pub-cache/bin:$PATH"
+                    set -o pipefail
+                    cd $MOBILE_DIR
+                    "$FLUTTER" test test/features/auth/login_screen_test.dart --machine | tojunit --output flutter-report.xml
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'mobile/flutter-report.xml'
+                }
             }
         }
 
@@ -33,7 +67,7 @@ pipeline {
             echo 'Pipeline completado correctamente.'
         }
         failure {
-            echo 'Pipeline fallido — revisá el log.'
+            echo 'Pipeline fallido'
         }
     }
 }
