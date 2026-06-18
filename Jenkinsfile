@@ -36,14 +36,12 @@ pipeline {
                 sh '''
                     cd backend
                     venv/bin/python -m pytest tests/ -v --tb=short \
-                        --junit-xml=pytest-report.xml \
                         --html=reporte-backend.html \
                         --self-contained-html
                 '''
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'backend/pytest-report.xml'
                     publishHTML(target: [
                         allowMissing: true,
                         alwaysLinkToLastBuild: true,
@@ -65,10 +63,20 @@ pipeline {
                     cd $MOBILE_DIR
                     "$FLUTTER" test test/features/auth/login_screen_test.dart --machine | tojunit --output flutter-report.xml
                 '''
+                sh '''
+                    backend/venv/bin/python -m junit2html mobile/flutter-report.xml mobile/reporte-frontend.html
+                '''
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'mobile/flutter-report.xml'
+                    publishHTML(target: [
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'mobile',
+                        reportFiles: 'reporte-frontend.html',
+                        reportName: 'Reporte Frontend'
+                    ])
                 }
             }
         }
@@ -77,7 +85,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'backend/pytest-report.xml, mobile/flutter-report.xml, backend/reporte-backend.html', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'backend/reporte-backend.html, mobile/reporte-frontend.html', allowEmptyArchive: true
         }
         success {
             echo 'Pipeline completado correctamente.'
