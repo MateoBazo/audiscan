@@ -49,9 +49,10 @@ pipeline {
             steps {
                 echo 'Ejecutando tests del Login'
                 sh '''
+                    export PATH="/opt/homebrew/bin:$HOME/.pub-cache/bin:$PATH"
                     set -o pipefail
                     cd $MOBILE_DIR
-                    "$FLUTTER" test test/features/auth/login_screen_test.dart --machine | "$HOME/.pub-cache/bin/tojunit" --output flutter-report.xml
+                    "$FLUTTER" test test/features/auth/login_screen_test.dart --machine | tojunit --output flutter-report.xml
                 '''
             }
             post {
