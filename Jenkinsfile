@@ -22,10 +22,10 @@ pipeline {
             steps {
                 echo 'Configurando entorno Python'
                 sh '''
-                    cd backend
-                    python3 -m venv venv
-                    venv/bin/pip install --upgrade pip --quiet
-                    venv/bin/pip install -r requirements-test.txt --quiet
+                    rm -rf backend/venv
+                    python3 -m venv backend/venv
+                    backend/venv/bin/pip install --upgrade pip --quiet
+                    backend/venv/bin/pip install -r backend/requirements-test.txt
                 '''
             }
         }
@@ -34,10 +34,10 @@ pipeline {
             steps {
                 echo 'Ejecutando tests unitarios del backend'
                 sh '''
-                    cd backend
-                    venv/bin/python -m pytest tests/ -v --tb=short \
-                        --html=reporte-backend.html \
-                        --self-contained-html
+                    backend/venv/bin/python -m pytest backend/tests/ -v --tb=short \
+                        --html=backend/reporte-backend.html \
+                        --self-contained-html \
+                        --rootdir=backend
                 '''
             }
             post {
