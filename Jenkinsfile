@@ -64,7 +64,7 @@ pipeline {
                     cd $MOBILE_DIR
                     "$FLUTTER" test test/features/auth/login_screen_test.dart --machine | tojunit --output flutter-report.xml
                 '''
-                sh 'backend/venv/bin/python -m junit2html mobile/flutter-report.xml mobile/reporte-frontend.html'
+                sh 'backend/venv/bin/junit2html mobile/flutter-report.xml mobile/reporte-frontend.html'
             }
             post {
                 always {
